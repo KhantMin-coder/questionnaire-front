@@ -28,6 +28,13 @@
   display: grid;
   gap: 40px;
   align-items: center;
+  padding: 40px 16px 60px 16px;
+}
+
+.landing-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .landing-hero-content {
@@ -62,6 +69,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0;
+  font-size: 2.5rem;
 }
 
 .landing-title-row {
@@ -74,6 +82,16 @@
   color: var(--primary-color);
   font-style: italic;
   font-weight: normal;
+  font-size: 3rem;
+}
+
+@media (min-width: 900px) {
+  .landing-hero-title {
+    font-size: 3.6rem;
+  }
+  .landing-title-cursive {
+    font-size: 4.2rem;
+  }
 }
 
 .landing-hero-desc {
@@ -757,6 +775,7 @@
 @media (min-width: 900px) {
   .landing-hero {
     grid-template-columns: 1.1fr 0.9fr;
+    padding: 80px 24px 100px 24px;
   }
   
   .landing-timeline-grid {

@@ -213,3 +213,32 @@
   font-weight: 700;
   font-family: var(--font-display);
 }
+
+/* Custom checkbox and "Other" styles */
+.runner-option-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-color);
+}
+
+.runner-other-input-wrapper {
+  margin-top: 8px;
+  padding-left: 28px;
+  width: 100%;
+}
+
+.runner-other-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--input-border);
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.runner-other-input:focus {
+  border-color: var(--primary-color);
+}

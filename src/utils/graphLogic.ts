@@ -18,6 +18,7 @@ export interface NodeData {
   options?: string[];
   delayDuration?: string;
   terminalMessage?: string;
+  allowOther?: boolean;
 }
 
 export interface GraphEdge {

@@ -132,19 +132,18 @@ const demoEdges: GraphEdge[] = [
 ];
 
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { scrollYProgress } = useScroll();
 
-  // Responsive State
-  const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 900);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // Demo Runner State
   const [demoCurrentNode, setDemoCurrentNode] = useState<NodeData | null>(demoNodes[0]);
@@ -286,13 +285,7 @@ export const Landing: React.FC = () => {
       />
 
       {/* 1. Hero Section */}
-      <section
-        className="landing-hero"
-        style={{
-          padding: isMobile ? '40px 16px 60px 16px' : '80px 24px 100px 24px',
-          gridTemplateColumns: isMobile ? '1fr' : '1.1fr 0.9fr'
-        }}
-      >
+      <section className="landing-hero">
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -303,12 +296,7 @@ export const Landing: React.FC = () => {
             <Sparkles size={12} className="landing-badge-icon" /> DYNAMIC RESEARCH PLATFORM
           </div>
 
-          <h1
-            className="landing-hero-title"
-            style={{
-              fontSize: isMobile ? '2.5rem' : '3.6rem'
-            }}
-          >
+          <h1 className="landing-hero-title">
             <div className="landing-title-row">
               <motion.span
                 initial="hidden"
@@ -327,12 +315,7 @@ export const Landing: React.FC = () => {
                 className="display-inline-block"
                 transition={{ delay: 0.15 }}
               >
-                <span
-                  className="landing-title-cursive"
-                  style={{
-                    fontSize: isMobile ? '3rem' : '4.2rem'
-                  }}
-                >
+                <span className="landing-title-cursive">
                   visually.
                 </span>
               </motion.span>
@@ -426,7 +409,7 @@ export const Landing: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         variants={sectionVariants}
-        className="landing-hero landing-section-padding-sm"
+        className="landing-section landing-section-padding-sm"
       >
         <div className="landing-section-header">
           <h2 className="landing-section-title">
@@ -450,9 +433,6 @@ export const Landing: React.FC = () => {
             }
           }}
           className="landing-timeline-grid"
-          style={{
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)'
-          }}
         >
           {[
             {
@@ -497,7 +477,7 @@ export const Landing: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         variants={sectionVariants}
-        className="landing-hero landing-section-padding"
+        className="landing-section landing-section-padding"
       >
         <div className="landing-hero-content">
           <div className="landing-section-header">
@@ -522,18 +502,12 @@ export const Landing: React.FC = () => {
               }
             }}
             className="landing-bento-grid"
-            style={{
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)'
-            }}
           >
             {/* Box 1: Visual builder - span 2 */}
             <motion.div
               variants={bentoCardVariants}
               whileHover={{ y: -6, scale: 1.005, boxShadow: 'var(--shadow-lg)' }}
-              className="glass-panel landing-feature-card"
-              style={{
-                gridColumn: isMobile ? 'span 1' : 'span 2'
-              }}
+              className="glass-panel landing-feature-card landing-feature-card--span2"
             >
               <div>
                 <div className="landing-icon-wrapper">
@@ -608,10 +582,7 @@ export const Landing: React.FC = () => {
             <motion.div
               variants={bentoCardVariants}
               whileHover={{ y: -6, scale: 1.005, boxShadow: 'var(--shadow-lg)' }}
-              className="glass-panel landing-feature-card"
-              style={{
-                gridColumn: isMobile ? 'span 1' : 'span 2'
-              }}
+              className="glass-panel landing-feature-card landing-feature-card--span2"
             >
               <div>
                 <div className="landing-icon-wrapper">
@@ -637,11 +608,7 @@ export const Landing: React.FC = () => {
             <motion.div
               variants={bentoCardVariants}
               whileHover={{ y: -6, scale: 1.005, boxShadow: 'var(--shadow-lg)' }}
-              className="glass-panel landing-feature-card"
-              style={{
-                gridColumn: isMobile ? 'span 1' : 'span 3',
-                flexDirection: isMobile ? 'column' : 'row'
-              }}
+              className="glass-panel landing-feature-card landing-feature-card--span3"
             >
               <div className="landing-feature-card-main">
                 <div className="landing-icon-wrapper">
@@ -654,12 +621,7 @@ export const Landing: React.FC = () => {
               </div>
 
               {/* Animated Mock Chart */}
-              <div
-                className="landing-chart-mini"
-                style={{
-                  minWidth: isMobile ? '100%' : '320px'
-                }}
-              >
+              <div className="landing-chart-mini">
                 <div className="landing-chart-header">
                   <span>Question drop-off rates</span>
                   <span>Avg Completion: 1m 45s</span>
@@ -710,14 +672,9 @@ export const Landing: React.FC = () => {
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         variants={sectionVariants}
-        className="landing-hero landing-section-padding"
+        className="landing-section landing-section-padding"
       >
-        <div
-          className="landing-demo-layout"
-          style={{
-            gridTemplateColumns: isMobile ? '1fr' : '0.9fr 1.1fr'
-          }}
-        >
+        <div className="landing-demo-layout">
           <div>
             <div className="landing-badge margin-bottom-md">
               LIVE ENGINE WIZARD

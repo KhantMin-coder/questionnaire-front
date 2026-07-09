@@ -70,7 +70,8 @@ export const Runner: React.FC = () => {
                 options: (n.data?.options as string[]) || [],
                 delayDuration: n.data?.delayDuration as string,
                 terminalMessage: n.data?.terminalMessage as string,
-                isDisqualification: n.data?.isDisqualification as boolean
+                isDisqualification: n.data?.isDisqualification as boolean,
+                allowOther: n.data?.allowOther as boolean
               };
             });
           }
@@ -107,9 +108,20 @@ export const Runner: React.FC = () => {
 
     // Field validation check
     const currentAnswer = answers[currentNode.id];
-    if (currentNode.type === 'question' && (currentAnswer === undefined || currentAnswer === '')) {
-      setErrorMsg('Please provide an answer before continuing.');
-      return;
+    const isEmptyArray = Array.isArray(currentAnswer) && currentAnswer.length === 0;
+    if (currentNode.type === 'question') {
+      if (currentAnswer === undefined || currentAnswer === '' || isEmptyArray) {
+        setErrorMsg('Please provide an answer before continuing.');
+        return;
+      }
+      if (typeof currentAnswer === 'string' && currentAnswer === 'Other') {
+        setErrorMsg('Please specify your "Other" answer.');
+        return;
+      }
+      if (Array.isArray(currentAnswer) && currentAnswer.includes('Other')) {
+        setErrorMsg('Please specify your "Other" answer.');
+        return;
+      }
     }
 
     // Keep history path for back navigation
@@ -288,6 +300,148 @@ export const Runner: React.FC = () => {
                             </span>
                           </label>
                         ))}
+                        
+                        {currentNode.allowOther && (
+                          <>
+                            {(() => {
+                              const ansStr = String(answers[currentNode.id] || '');
+                              const isOtherSelected = ansStr.startsWith('Other');
+                              const otherText = ansStr.startsWith('Other: ') ? ansStr.substring(7) : '';
+                              return (
+                                <>
+                                  <label
+                                    className="glass-panel runner-option-label"
+                                    style={{
+                                      border: isOtherSelected 
+                                        ? '1.5px solid var(--primary-color)' 
+                                        : '1px solid var(--panel-border)',
+                                      backgroundColor: isOtherSelected 
+                                        ? 'var(--primary-glow)' 
+                                        : 'var(--panel-bg)'
+                                    }}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`ans-${currentNode.id}`}
+                                      checked={isOtherSelected}
+                                      onChange={() => setAnswers({ ...answers, [currentNode.id]: 'Other' })}
+                                      className="runner-option-radio"
+                                    />
+                                    <span className="runner-option-text">Other</span>
+                                  </label>
+                                  {isOtherSelected && (
+                                    <div className="runner-other-input-wrapper">
+                                      <input
+                                        type="text"
+                                        className="runner-other-input"
+                                        placeholder="Please specify..."
+                                        value={otherText}
+                                        onChange={(e) => {
+                                          const val = e.target.value.trim() ? `Other: ${e.target.value}` : 'Other';
+                                          setAnswers({ ...answers, [currentNode.id]: val });
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {currentNode.questionType === 'multi' && currentNode.options && (
+                      <div className="runner-options-list">
+                        {(() => {
+                          const currentList = Array.isArray(answers[currentNode.id]) ? (answers[currentNode.id] as string[]) : [];
+                          const isOtherChecked = currentList.some(item => item.startsWith('Other'));
+                          const otherItem = currentList.find(item => item.startsWith('Other'));
+                          const otherText = otherItem && otherItem.startsWith('Other: ') ? otherItem.substring(7) : '';
+
+                          return (
+                            <>
+                              {currentNode.options.map((opt, idx) => {
+                                const isChecked = currentList.includes(opt);
+                                return (
+                                  <label
+                                    key={idx}
+                                    className="glass-panel runner-option-label"
+                                    style={{
+                                      border: isChecked 
+                                        ? '1.5px solid var(--primary-color)' 
+                                        : '1px solid var(--panel-border)',
+                                      backgroundColor: isChecked 
+                                        ? 'var(--primary-glow)' 
+                                        : 'var(--panel-bg)'
+                                    }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        if (isChecked) {
+                                          setAnswers({ ...answers, [currentNode.id]: currentList.filter(o => o !== opt) });
+                                        } else {
+                                          setAnswers({ ...answers, [currentNode.id]: [...currentList, opt] });
+                                        }
+                                      }}
+                                      className="runner-option-checkbox"
+                                    />
+                                    <span className="runner-option-text">
+                                      {opt}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+
+                              {currentNode.allowOther && (
+                                <>
+                                  <label
+                                    className="glass-panel runner-option-label"
+                                    style={{
+                                      border: isOtherChecked 
+                                        ? '1.5px solid var(--primary-color)' 
+                                        : '1px solid var(--panel-border)',
+                                      backgroundColor: isOtherChecked 
+                                        ? 'var(--primary-glow)' 
+                                        : 'var(--panel-bg)'
+                                    }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isOtherChecked}
+                                      onChange={() => {
+                                        if (isOtherChecked) {
+                                          setAnswers({ ...answers, [currentNode.id]: currentList.filter(o => !o.startsWith('Other')) });
+                                        } else {
+                                          setAnswers({ ...answers, [currentNode.id]: [...currentList, 'Other'] });
+                                        }
+                                      }}
+                                      className="runner-option-checkbox"
+                                    />
+                                    <span className="runner-option-text">Other</span>
+                                  </label>
+                                  {isOtherChecked && (
+                                    <div className="runner-other-input-wrapper">
+                                      <input
+                                        type="text"
+                                        className="runner-other-input"
+                                        placeholder="Please specify..."
+                                        value={otherText}
+                                        onChange={(e) => {
+                                          const val = e.target.value.trim() ? `Other: ${e.target.value}` : 'Other';
+                                          const cleanList = currentList.filter(o => !o.startsWith('Other'));
+                                          setAnswers({ ...answers, [currentNode.id]: [...cleanList, val] });
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                   </>
