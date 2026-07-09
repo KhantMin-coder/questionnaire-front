@@ -1,0 +1,20 @@
+/* Login Specific Styles */
+.login-header-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-input-wrapper {
+  position: relative;
+}
+
+.login-password-group {
+  margin-bottom: 28px;
+}
+
+.login-toggle-text {
+  color: var(--text-muted);
+}
