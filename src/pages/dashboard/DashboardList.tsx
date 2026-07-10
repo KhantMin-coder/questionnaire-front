@@ -11,6 +11,7 @@ interface DashboardListProps {
   setStatusFilter: (f: 'all' | 'published' | 'draft' | 'archived') => void;
   handleCreateSurvey: () => void;
   setSelectedSurveyId: (id: string) => void;
+  handleReseedData: () => void;
 }
 
 export const DashboardList: React.FC<DashboardListProps> = ({
@@ -20,7 +21,8 @@ export const DashboardList: React.FC<DashboardListProps> = ({
   statusFilter,
   setStatusFilter,
   handleCreateSurvey,
-  setSelectedSurveyId
+  setSelectedSurveyId,
+  handleReseedData
 }) => {
   const filteredSurveys = surveys.filter(survey => {
     const matchesSearch = survey.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -35,9 +37,14 @@ export const DashboardList: React.FC<DashboardListProps> = ({
           <h1 className="dashboard-title">Research Analytics</h1>
           <p className="dashboard-subtitle">Manage, monitor, and audit your branching questionnaires.</p>
         </div>
-        <button onClick={handleCreateSurvey} className="btn btn-primary flex-row-center dashboard-create-btn">
-          <Plus size={16} /> Create Survey
-        </button>
+        <div className="flex-row-center flex-gap-sm">
+          <button onClick={handleReseedData} className="btn btn-secondary flex-row-center dashboard-create-btn">
+            Reseed Data
+          </button>
+          <button onClick={handleCreateSurvey} className="btn btn-primary flex-row-center dashboard-create-btn">
+            <Plus size={16} /> Create Survey
+          </button>
+        </div>
       </div>
 
       <div className="dashboard-toolbar">

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Share2, GitFork, QrCode, Copy, Check, FileText } from 'lucide-react';
+import { ArrowLeft, Share2, GitFork, QrCode, Copy, Check, FileText, Trash2 } from 'lucide-react';
 
 import { mockSurveys } from './dashboard/constants';
 import { DashboardList } from './dashboard/DashboardList';
@@ -75,7 +75,42 @@ export const Dashboard: React.FC = () => {
     const updatedSurveys = [newSurvey, ...surveys];
     setSurveys(updatedSurveys);
     localStorage.setItem('resonator_surveys', JSON.stringify(updatedSurveys));
+    localStorage.setItem('resonator_active_survey_id', newId);
+    window.dispatchEvent(new Event('active_survey_changed'));
     navigate(`/builder/${newId}`);
+  };
+
+  const handleDeleteSurvey = () => {
+    if (!selectedSurveyId) return;
+    const isConfirmed = window.confirm(
+      'Are you sure you want to delete this questionnaire? All collected responses and routing rules will be permanently lost.'
+    );
+    if (isConfirmed) {
+      const updated = surveys.filter(s => s.id !== selectedSurveyId);
+      setSurveys(updated);
+      localStorage.setItem('resonator_surveys', JSON.stringify(updated));
+      localStorage.removeItem(`resonator_graph_${selectedSurveyId}`);
+      
+      const activeId = localStorage.getItem('resonator_active_survey_id');
+      if (activeId === selectedSurveyId) {
+        localStorage.removeItem('resonator_active_survey_id');
+      }
+      window.dispatchEvent(new Event('active_survey_changed'));
+      setSelectedSurveyId(null);
+    }
+  };
+
+  const handleReseedData = () => {
+    const isConfirmed = window.confirm(
+      'Are you sure you want to reset all questionnaires back to their initial demo seed data? Any drafts or custom changes will be overwritten.'
+    );
+    if (isConfirmed) {
+      localStorage.setItem('resonator_surveys', JSON.stringify(mockSurveys));
+      setSurveys(mockSurveys);
+      localStorage.removeItem('resonator_active_survey_id');
+      window.dispatchEvent(new Event('active_survey_changed'));
+      setSelectedSurveyId(null);
+    }
   };
 
   return (
@@ -96,7 +131,13 @@ export const Dashboard: React.FC = () => {
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
               handleCreateSurvey={handleCreateSurvey}
-              setSelectedSurveyId={(id) => { setSelectedSurveyId(id); setActiveTab('overview'); }}
+              setSelectedSurveyId={(id) => {
+                setSelectedSurveyId(id);
+                setActiveTab('overview');
+                localStorage.setItem('resonator_active_survey_id', id);
+                window.dispatchEvent(new Event('active_survey_changed'));
+              }}
+              handleReseedData={handleReseedData}
             />
           </motion.div>
         ) : selectedSurvey ? (
@@ -129,6 +170,9 @@ export const Dashboard: React.FC = () => {
                 </button>
                 <button onClick={() => navigate(`/builder/${selectedSurveyId}`)} className="btn btn-secondary flex-row-center dashboard-btn-sm">
                   <GitFork size={14} /> Edit Flow
+                </button>
+                <button onClick={handleDeleteSurvey} className="btn btn-danger flex-row-center dashboard-btn-sm">
+                  <Trash2 size={14} /> Delete
                 </button>
               </div>
             </div>

@@ -67,14 +67,16 @@ export const mockResponses: Record<string, Array<{ id: string; timestamp: string
 };
 
 export const getKpiIcon = (iconName: string) => {
-  switch (iconName) {
-    case 'Users':
+  if (typeof iconName !== 'string') return null;
+  switch (iconName.toLowerCase()) {
+    case 'users':
       return React.createElement(Users, { size: 18, color: 'var(--primary-color)' });
-    case 'Percent':
+    case 'percent':
       return React.createElement(Percent, { size: 18, color: 'var(--primary-color)' });
-    case 'Clock':
+    case 'clock':
       return React.createElement(Clock, { size: 18, color: 'var(--primary-color)' });
-    case 'CheckCircle':
+    case 'checkcircle':
+    case 'check-circle':
       return React.createElement(CheckCircle, { size: 18, color: 'var(--primary-color)' });
     default:
       return null;

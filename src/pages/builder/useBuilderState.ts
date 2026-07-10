@@ -38,6 +38,13 @@ export const useBuilderState = (id: string | undefined) => {
     nodesRef.current = nodes;
   }, [nodes]);
 
+  useEffect(() => {
+    if (id) {
+      localStorage.setItem('resonator_active_survey_id', id);
+      window.dispatchEvent(new Event('active_survey_changed'));
+    }
+  }, [id]);
+
   const focusNode = useCallback((nodeId: string) => {
     const node = getNode(nodeId);
     if (node) {

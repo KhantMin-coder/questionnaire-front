@@ -59,6 +59,9 @@ export const useBuilderPersistence = (
         }));
         setEdges(loadedEdges);
       } catch (e) { }
+    } else {
+      setNodes([]);
+      setEdges([]);
     }
     setIsLoaded(true);
   }, [id, setNodes, setEdges, focusNode, handleSelectEdgeById, setIsLoaded, setSurveyTitle, setSurveyStatus]);

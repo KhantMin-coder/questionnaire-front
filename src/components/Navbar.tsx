@@ -43,6 +43,48 @@ export const Navbar: React.FC = () => {
     ? 'runner' 
     : '';
 
+  const [activeSurveyTitle, setActiveSurveyTitle] = useState<string>('');
+  const [activeSurveyId, setActiveSurveyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const updateActiveContext = () => {
+      const activeId = localStorage.getItem('resonator_active_survey_id');
+      const saved = localStorage.getItem('resonator_surveys');
+      
+      let title = '';
+      let targetId: string | null = activeId;
+
+      if (saved) {
+        try {
+          const surveys = JSON.parse(saved);
+          // Fallback if no active survey context is stored yet
+          if (!targetId && surveys.length > 0) {
+            targetId = surveys[0].id;
+          }
+          const activeSurvey = surveys.find((s: any) => s.id === targetId);
+          if (activeSurvey) {
+            title = activeSurvey.title;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      setActiveSurveyId(targetId);
+      setActiveSurveyTitle(title ? (title.length > 12 ? title.substring(0, 12) + '...' : title) : '');
+    };
+
+    updateActiveContext();
+
+    window.addEventListener('active_survey_changed', updateActiveContext);
+    window.addEventListener('storage', updateActiveContext);
+
+    return () => {
+      window.removeEventListener('active_survey_changed', updateActiveContext);
+      window.removeEventListener('storage', updateActiveContext);
+    };
+  }, [location.pathname]);
+
   return (
     <header className="glass-panel navbar-header">
       <div 
@@ -68,46 +110,27 @@ export const Navbar: React.FC = () => {
           </button>
           <button
             onClick={() => {
-              // Try to find the last edited survey ID, otherwise fallback to dev-exp
-              const saved = localStorage.getItem('resonator_surveys');
-              let targetId = 'dev-exp';
-              if (saved) {
-                try {
-                  const surveys = JSON.parse(saved);
-                  if (surveys.length > 0) {
-                    targetId = surveys[0].id;
-                  }
-                } catch (e) {
-                  // ignore
-                }
+              if (activeSurveyId) {
+                navigate(`/builder/${activeSurveyId}`);
               }
-              navigate(`/builder/${targetId}`);
             }}
             className={`btn navbar-link ${currentTab === 'builder' ? 'btn-primary' : 'btn-secondary'}`}
+            disabled={!activeSurveyId}
           >
             <GitFork size={16} />
-            Visual Builder
+            Visual Builder {activeSurveyTitle ? `(${activeSurveyTitle})` : ''}
           </button>
           <button
             onClick={() => {
-              const saved = localStorage.getItem('resonator_surveys');
-              let targetId = 'dev-exp';
-              if (saved) {
-                try {
-                  const surveys = JSON.parse(saved);
-                  if (surveys.length > 0) {
-                    targetId = surveys[0].id;
-                  }
-                } catch (e) {
-                  // ignore
-                }
+              if (activeSurveyId) {
+                navigate(`/survey/${activeSurveyId}`);
               }
-              navigate(`/survey/${targetId}`);
             }}
             className={`btn navbar-link ${currentTab === 'runner' ? 'btn-primary' : 'btn-secondary'}`}
+            disabled={!activeSurveyId}
           >
             <ClipboardList size={16} />
-            Survey Runner
+            Survey Runner {activeSurveyTitle ? `(${activeSurveyTitle})` : ''}
           </button>
         </nav>
       )}

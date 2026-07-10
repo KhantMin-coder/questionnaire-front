@@ -21,6 +21,21 @@ export const useGraphValidation = (
     const warningList: ValidationWarning[] = [];
     const allEdges = edges as ExtendedEdge[];
 
+    // 1. Empty Flow Check (Blocking)
+    if (nodes.length === 0) {
+      warningList.push({
+        message: 'A questionnaire cannot be empty. Please add at least one node to the canvas before publishing.',
+        isError: true
+      });
+      setValidationResult({
+        status: 'error',
+        message: 'Validation failed. The canvas is empty.',
+        warnings: warningList
+      });
+      return false;
+    }
+
+    // 2. Cycle Detection (Blocking)
     const hasCycle = detectCycle(nodes, edges);
     if (hasCycle) {
       warningList.push({
@@ -29,6 +44,7 @@ export const useGraphValidation = (
       });
     }
 
+    // 3. Chain Depth Enforcement (Blocking)
     const depthVal = validateFollowUpDepth(nodes, edges);
     if (!depthVal.valid) {
       warningList.push({
@@ -37,6 +53,63 @@ export const useGraphValidation = (
       });
     }
 
+    // 4. Missing Terminal Node Check (Blocking)
+    const hasTerminalNode = nodes.some(n => n.type === 'terminal');
+    if (!hasTerminalNode) {
+      warningList.push({
+        message: 'The survey flow must contain at least one Terminal Node (Completion or Disqualification) so respondents can complete the survey.',
+        isError: true
+      });
+    }
+
+    // Determine start/incoming connections mapping
+    const incomingCounts: Record<string, number> = {};
+    nodes.forEach(n => { incomingCounts[n.id] = 0; });
+    allEdges.forEach(e => {
+      if (incomingCounts[e.target] !== undefined) {
+        incomingCounts[e.target]++;
+      }
+    });
+
+    const startNodes = nodes.filter(n => incomingCounts[n.id] === 0);
+    const mainStartNode = startNodes[0];
+
+    // 5. Unreachable & Disconnected Nodes Traversal (Warning)
+    const visited = new Set<string>();
+    if (mainStartNode) {
+      const queue: string[] = [mainStartNode.id];
+      visited.add(mainStartNode.id);
+
+      while (queue.length > 0) {
+        const currId = queue.shift()!;
+        const outgoing = allEdges.filter(e => e.source === currId);
+        outgoing.forEach(edge => {
+          if (!visited.has(edge.target)) {
+            visited.add(edge.target);
+            queue.push(edge.target);
+          }
+        });
+      }
+    }
+
+    nodes.forEach(node => {
+      // Orphaned: no incoming connection (except main start node)
+      if (node.id !== mainStartNode?.id && incomingCounts[node.id] === 0) {
+        warningList.push({
+          message: `${node.type === 'delay' ? 'Delay' : node.type === 'terminal' ? 'Terminal' : 'Question'} "Q${node.id}: ${node.data?.label || 'Untitled'}" is orphaned with no incoming paths.`,
+          nodeId: node.id
+        });
+      } 
+      // Disconnected: has incoming connections but unreachable from start node
+      else if (mainStartNode && !visited.has(node.id)) {
+        warningList.push({
+          message: `${node.type === 'delay' ? 'Delay' : node.type === 'terminal' ? 'Terminal' : 'Question'} "Q${node.id}: ${node.data?.label || 'Untitled'}" is unreachable from the survey starting node.`,
+          nodeId: node.id
+        });
+      }
+    });
+
+    // 6. Dead End Fan-out checks (Warning)
     const nonTerminalNodes = nodes.filter(n => n.type === 'question' || n.type === 'delay');
     nonTerminalNodes.forEach(node => {
       const outgoing = allEdges.filter(e => e.source === node.id);
@@ -60,6 +133,7 @@ export const useGraphValidation = (
       }
     });
 
+    // 7. Question Condition Evaluations (Blocking & Warning checks)
     const questionNodes = nodes.filter(n => n.type === 'question');
     questionNodes.forEach(node => {
       const outgoing = allEdges.filter(e => e.source === node.id);
@@ -81,10 +155,50 @@ export const useGraphValidation = (
           });
         }
 
+        // Duplicate and stale rules check
         const optionUsage: Record<string, string[]> = {};
         conditionalEdges.forEach(edge => {
           const rules = edge.rules || [];
           rules.forEach((rule: EdgeRule) => {
+            // Rule 3: Invalid Field Reference check (Blocking)
+            const referencedNode = nodes.find(n => n.id === rule.field);
+            if (!referencedNode) {
+              warningList.push({
+                message: `Routing connection from Q${node.id} references a deleted or non-existent question field (ID: ${rule.field}).`,
+                isError: true,
+                nodeId: node.id
+              });
+              return;
+            }
+
+            // Rule 1: Stale Choice Conditions check (Blocking)
+            if (referencedNode.type === 'question' && (referencedNode.data?.questionType === 'single' || referencedNode.data?.questionType === 'multi')) {
+              const options = referencedNode.data?.options || [];
+              const isOtherVal = rule.value === 'Other' || rule.value.startsWith('Other:');
+              const isValidOther = isOtherVal && referencedNode.data?.allowOther;
+
+              if (rule.operator === '==' || rule.operator === '!=') {
+                const valueExists = options.includes(rule.value);
+                if (!valueExists && !isValidOther) {
+                  warningList.push({
+                    message: `Routing rule on path from Q${node.id} references option "${rule.value}" which is no longer configured in the question options list for Q${referencedNode.id}.`,
+                    isError: true,
+                    nodeId: node.id
+                  });
+                }
+              }
+            }
+
+            // Rule 6: Type Mismatch conditions check (Warning)
+            const isNumericOp = ['<', '>', '<=', '>='].includes(rule.operator);
+            if (isNumericOp && referencedNode.type === 'question' && referencedNode.data?.questionType !== 'input') {
+              warningList.push({
+                message: `Numeric condition "${rule.operator} ${rule.value}" is configured on choice selection question Q${referencedNode.id}. Numeric checks should only be applied to input fields.`,
+                nodeId: node.id
+              });
+            }
+
+            // Record choice equals values to catch duplicates
             if (rule.operator === '==') {
               const key = `${rule.field}_${rule.value.toLowerCase().trim()}`;
               if (!optionUsage[key]) optionUsage[key] = [];
@@ -105,6 +219,7 @@ export const useGraphValidation = (
       }
     });
 
+    // Update nodes state with local warnings
     let hasChanged = false;
     const nextNodes = nodes.map((node) => {
       const nodeWarnings = warningList.filter((w) => w.nodeId === node.id).map((w) => w.message);

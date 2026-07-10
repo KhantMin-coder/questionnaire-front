@@ -15,6 +15,10 @@ export const useRunnerState = (id: string | undefined, defaultNodes: NodeData[],
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
+    if (id) {
+      localStorage.setItem('resonator_active_survey_id', id);
+      window.dispatchEvent(new Event('active_survey_changed'));
+    }
     let token = localStorage.getItem('resonator_respondent_uuid');
     if (!token) {
       token = 'resp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
