@@ -740,3 +740,103 @@
   transition: all 0.2s;
   border-bottom: 2px solid transparent;
 }
+
+/* Centralized status and chart configuration classes */
+.dashboard-filter-btn--active {
+  background-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.dashboard-status-badge--published {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-bg);
+}
+
+.dashboard-status-badge--draft {
+  background-color: var(--color-accent-amber-bg);
+  color: var(--color-accent-amber);
+  border: 1px solid var(--color-accent-amber-bg);
+}
+
+.dashboard-status-badge--archived {
+  background-color: rgba(148, 163, 184, 0.08);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.dashboard-status-badge-detailed--published {
+  color: #22c55e !important;
+  background-color: rgba(34, 197, 94, 0.08) !important;
+  border-color: rgba(34, 197, 94, 0.2) !important;
+}
+
+.dashboard-status-badge-detailed--draft {
+  color: #f59e0b !important;
+  background-color: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.dashboard-status-badge-detailed--archived {
+  color: #94a3b8 !important;
+  background-color: rgba(148, 163, 184, 0.08) !important;
+  border-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+.dashboard-tab-btn--active {
+  color: var(--primary-color) !important;
+  border-bottom-color: var(--primary-color) !important;
+}
+
+.dashboard-range-btn--active {
+  background-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.legend-dot--primary {
+  background-color: var(--primary-color);
+}
+
+.legend-dot--warning {
+  background-color: #f59e0b;
+}
+
+.legend-dot--danger {
+  background-color: #ef4444;
+}
+
+.dashboard-table-status--completed {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.dashboard-table-status--disqualified {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.dashboard-table-status--pending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.dashboard-log-status--linked {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.dashboard-log-status--awaiting {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.dashboard-log-status--failed {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+/* Centralized Recharts Tick styles */
+.recharts-axis-font text {
+  font-size: 0.75rem !important;
+}
+

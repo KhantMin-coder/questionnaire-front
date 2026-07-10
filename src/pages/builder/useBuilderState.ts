@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNodesState, useEdgesState, addEdge, useReactFlow } from '@xyflow/react';
-import type { Connection, Edge } from '@xyflow/react';
+import type { Connection, Edge, Node } from '@xyflow/react';
 import type { CustomNode, ExtendedEdge, ValidationWarning } from '../../types/builder';
 import type { EdgeRule } from '../../utils/graphLogic';
 
@@ -143,14 +143,14 @@ export const useBuilderState = (id: string | undefined) => {
     [setEdges]
   );
 
-  const onNodeClick = useCallback((_: any, node: any) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNode(node as CustomNode);
     setSelectedEdge(null);
     setIsSidebarOpen(true);
     setActiveSidebarTab('properties');
   }, []);
 
-  const onEdgeClick = useCallback((_: any, edge: any) => {
+  const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
     setSelectedEdge(edge as ExtendedEdge);
     setSelectedNode(null);
     setIsSidebarOpen(true);

@@ -804,3 +804,9 @@
     grid-template-columns: 0.9fr 1.1fr;
   }
 }
+
+.landing-phone-back-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+

@@ -242,3 +242,9 @@
 .runner-other-input:focus {
   border-color: var(--primary-color);
 }
+
+.runner-option-label--selected {
+  border: 1.5px solid var(--primary-color) !important;
+  background-color: var(--primary-glow) !important;
+}
+

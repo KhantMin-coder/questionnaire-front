@@ -1,22 +1,47 @@
 import type { Edge, Node } from '@xyflow/react';
 import type { EdgeRule } from '../utils/graphLogic';
 
+export interface SurveyKPI {
+  label: string;
+  value: string;
+  change: string;
+  icon: string;
+}
+
+export interface QuestionStatOption {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+export interface QuestionBreakdown {
+  id: string;
+  number: number;
+  type: 'input' | 'single' | 'multi';
+  text: string;
+  responses: number;
+  stats?: string;
+  options?: QuestionStatOption[];
+}
+
+export interface FollowUpLog {
+  email: string;
+  original: string;
+  followUp: string;
+  status: string;
+}
+
 export interface SurveyItem {
   id: string;
   title: string;
-  status: 'published' | 'draft';
+  status: 'published' | 'draft' | 'archived';
   lastModified: string;
-  kpis?: Array<{
-    label: string;
-    value: string;
-    change: string;
-    icon: string;
-  }>;
-  timeline?: any[];
-  dropOff?: any[];
-  pie?: any[];
-  questions?: any[];
-  logs?: any[];
+  kpis: SurveyKPI[];
+  timeline: Array<{ date: string; completed: number; pending: number; disqualified: number }>;
+  dropOff: Array<{ name: string; completed: number; dropOff: number }>;
+  pie: Array<{ name: string; value: number; color: string }>;
+  questions: QuestionBreakdown[];
+  logs: FollowUpLog[];
 }
 
 export interface CustomNode extends Node {
@@ -32,7 +57,7 @@ export interface CustomNode extends Node {
     allowOther?: boolean;
     warnings?: string[];
     onFocusWarning?: () => void;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -41,7 +66,7 @@ export interface ExtendedEdge extends Edge {
   data?: {
     rules?: EdgeRule[];
     onSelect?: () => void;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

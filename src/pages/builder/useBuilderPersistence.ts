@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import type { Edge } from '@xyflow/react';
-import type { CustomNode, SurveyItem } from '../../types/builder';
+import type { CustomNode, SurveyItem, ExtendedEdge } from '../../types/builder';
 
 export const useBuilderPersistence = (
   id: string | undefined,
@@ -37,7 +37,7 @@ export const useBuilderPersistence = (
     if (savedGraph) {
       try {
         const graphData = JSON.parse(savedGraph);
-        const loadedNodes = (graphData.nodes || []).map((n: any) => ({
+        const loadedNodes = (graphData.nodes || []).map((n: CustomNode) => ({
           ...n,
           data: {
             ...n.data,
@@ -46,7 +46,7 @@ export const useBuilderPersistence = (
         }));
         setNodes(loadedNodes);
 
-        const loadedEdges = (graphData.edges || []).map((e: any) => ({
+        const loadedEdges = (graphData.edges || []).map((e: ExtendedEdge) => ({
           ...e,
           type: 'custom',
           animated: true,
