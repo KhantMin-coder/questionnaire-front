@@ -17,9 +17,9 @@
   --primary-glow: rgba(45, 94, 58, 0.08);
   --primary-border: rgba(45, 94, 58, 0.08);
   
-  --panel-bg: #ffffff;
+  --panel-bg: rgba(255, 255, 255, 0.82);
   --panel-border: rgba(45, 94, 58, 0.12);
-  --panel-blur: none;
+  --panel-blur: blur(16px);
   
   --input-bg: #FCFAF7;
   --input-border: #E3E1DB;

@@ -1,21 +1,18 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { AuthContext, type User } from '../types/auth';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-}
-
-export interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (token: string, user: User) => void;
-  logout: () => void;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-}
-
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const isValidUser = (val: unknown): val is User => {
+  if (typeof val !== 'object' || val === null) return false;
+  const candidate = val as Record<string, unknown>;
+  return (
+    typeof candidate.id === 'string' &&
+    candidate.id.trim().length > 0 &&
+    typeof candidate.email === 'string' &&
+    candidate.email.trim().length > 0 &&
+    typeof candidate.name === 'string' &&
+    candidate.name.trim().length > 0
+  );
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -23,16 +20,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load persisted session
     const storedToken = localStorage.getItem('resonator_token');
     const storedUser = localStorage.getItem('resonator_user');
 
     if (storedToken && storedUser) {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        const parsedUser: unknown = JSON.parse(storedUser);
+        if (isValidUser(parsedUser)) {
+          setToken(storedToken);
+          setUser(parsedUser);
+        } else {
+          localStorage.removeItem('resonator_token');
+          localStorage.removeItem('resonator_user');
+        }
       } catch {
-        // Clear corrupt storage
         localStorage.removeItem('resonator_token');
         localStorage.removeItem('resonator_user');
       }
@@ -40,14 +41,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const login = (newToken: string, newUser: User) => {
+  const login = (newToken: string, newUser: User): void => {
     setToken(newToken);
     setUser(newUser);
     localStorage.setItem('resonator_token', newToken);
     localStorage.setItem('resonator_user', JSON.stringify(newUser));
   };
 
-  const logout = () => {
+  const logout = (): void => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('resonator_token');
@@ -61,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         login,
         logout,
-        isAuthenticated: !!token,
+        isAuthenticated: Boolean(token && user),
         isLoading,
       }}
     >
@@ -69,4 +70,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
-

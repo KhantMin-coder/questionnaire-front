@@ -1,11 +1,13 @@
-import React from 'react';
-import { Trash2 } from 'lucide-react';
-import type { CustomNode } from '../../types/builder';
+import React, { useMemo } from 'react';
+import { Trash2, Copy } from 'lucide-react';
+import type { CustomNode, SurveyItem } from '../../types/builder';
 import type { Edge } from '@xyflow/react';
 
 interface NodeSettingsEditorProps {
+  currentSurveyId?: string;
   selectedNode: CustomNode;
   updateSelectedNodeData: (updates: Partial<CustomNode['data']>) => void;
+  duplicateSelectedNode: () => void;
   propagateOptionRename: (nodeId: string, oldVal: string, newVal: string) => void;
   setNodes: React.Dispatch<React.SetStateAction<CustomNode[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
@@ -14,14 +16,28 @@ interface NodeSettingsEditorProps {
 }
 
 export const NodeSettingsEditor: React.FC<NodeSettingsEditorProps> = ({
+  currentSurveyId,
   selectedNode,
   updateSelectedNodeData,
+  duplicateSelectedNode,
   propagateOptionRename,
   setNodes,
   setEdges,
   setSelectedNode,
   setIsSidebarOpen
 }) => {
+  const availableSurveys = useMemo<SurveyItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('resonator_surveys');
+      if (!saved) return [];
+      const parsed: unknown = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      return (parsed as SurveyItem[]).filter((s) => s.id !== currentSurveyId);
+    } catch {
+      return [];
+    }
+  }, [currentSurveyId]);
+
   return (
     <div className="sidebar-content">
       <div className="sidebar-subtitle">
@@ -41,6 +57,17 @@ export const NodeSettingsEditor: React.FC<NodeSettingsEditorProps> = ({
           </div>
 
           <div className="form-group">
+            <label className="form-label" htmlFor="node-helper-text">Helper Text (Optional)</label>
+            <input
+              id="node-helper-text"
+              className="form-input"
+              placeholder="e.g. Select the option that best applies"
+              value={selectedNode.data.helperText || ''}
+              onChange={(e) => updateSelectedNodeData({ helperText: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group">
             <label className="form-label" htmlFor="question-type-select">Response Input Type</label>
             <select
               id="question-type-select"
@@ -51,15 +78,38 @@ export const NodeSettingsEditor: React.FC<NodeSettingsEditorProps> = ({
                 const updates: Partial<CustomNode['data']> = { questionType: newType };
                 if (newType === 'input') {
                   updates.options = [];
+                  updates.inputType = selectedNode.data.inputType || 'text';
+                } else if (!selectedNode.data.options || selectedNode.data.options.length === 0) {
+                  updates.options = ['Option 1', 'Option 2'];
                 }
                 updateSelectedNodeData(updates);
               }}
             >
               <option value="single">Single Choice (Radio)</option>
               <option value="multi">Multiple Choice (Checkbox)</option>
-              <option value="input">Text / Number Input</option>
+              <option value="input">Input Element (Text / Number / Date / Textarea)</option>
             </select>
           </div>
+
+          {selectedNode.data.questionType === 'input' && (
+            <div className="form-group">
+              <label className="form-label" htmlFor="input-subtype-select">Input Element Subtype</label>
+              <select
+                id="input-subtype-select"
+                className="form-input"
+                value={selectedNode.data.inputType || 'text'}
+                onChange={(e) => {
+                  const newSubtype = e.target.value as 'text' | 'number' | 'date' | 'textarea';
+                  updateSelectedNodeData({ inputType: newSubtype });
+                }}
+              >
+                <option value="text">Text (Single Line)</option>
+                <option value="number">Number</option>
+                <option value="date">Date</option>
+                <option value="textarea">Textarea (Multi-line)</option>
+              </select>
+            </div>
+          )}
 
           {/* Options list for choices */}
           {(selectedNode.data.questionType === 'single' || selectedNode.data.questionType === 'multi') && (
@@ -85,6 +135,7 @@ export const NodeSettingsEditor: React.FC<NodeSettingsEditorProps> = ({
                       updateSelectedNodeData({ options: newOpts });
                     }}
                     className="btn btn-secondary sidebar-remove-option-btn"
+                    aria-label={`Remove option ${i + 1}`}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -129,14 +180,37 @@ export const NodeSettingsEditor: React.FC<NodeSettingsEditorProps> = ({
             />
           </div>
           <div className="form-group">
-            <label className="form-label" htmlFor="target-q-input">Target Follow-Up Questionnaire</label>
-            <input
-              id="target-q-input"
+            <label className="form-label" htmlFor="target-q-select">Target Follow-Up Questionnaire</label>
+            <select
+              id="target-q-select"
               className="form-input"
-              value={selectedNode.data.targetQuestionnaireName || ''}
-              onChange={(e) => updateSelectedNodeData({ targetQuestionnaireName: e.target.value })}
-              placeholder="Survey Title"
-            />
+              value={selectedNode.data.targetQuestionnaireId || selectedNode.data.targetQuestionnaireName || ''}
+              onChange={(e) => {
+                const selectedVal = e.target.value;
+                const matched = availableSurveys.find((s) => s.id === selectedVal);
+                if (matched) {
+                  updateSelectedNodeData({
+                    targetQuestionnaireId: matched.id,
+                    targetQuestionnaireName: matched.title
+                  });
+                } else {
+                  updateSelectedNodeData({
+                    targetQuestionnaireId: selectedVal,
+                    targetQuestionnaireName: selectedVal || 'Follow-up survey'
+                  });
+                }
+              }}
+            >
+              <option value="">-- Select Target Questionnaire --</option>
+              {availableSurveys.map((survey) => (
+                <option key={survey.id} value={survey.id}>
+                  {survey.title}
+                </option>
+              ))}
+              <option value="Deep React cohort">Deep React cohort</option>
+              <option value="Vue Scheduler survey">Vue Scheduler survey</option>
+              <option value="Svelte cohort Q">Svelte cohort Q</option>
+            </select>
           </div>
         </>
       )}
@@ -164,6 +238,13 @@ export const NodeSettingsEditor: React.FC<NodeSettingsEditorProps> = ({
           </div>
         </>
       )}
+
+      <button
+        onClick={duplicateSelectedNode}
+        className="btn btn-secondary sidebar-duplicate-btn"
+      >
+        <Copy size={16} /> Duplicate Node
+      </button>
 
       <button
         onClick={() => {

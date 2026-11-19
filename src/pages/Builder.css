@@ -140,7 +140,29 @@
   margin-bottom: 4px;
 }
 
-/* Custom Edge Labels */
+/* Custom Edge Paths & Labels */
+.custom-edge-path {
+  transition: stroke 0.2s, stroke-width 0.2s, opacity 0.2s;
+}
+
+.custom-edge-path--default {
+  stroke: var(--text-muted) !important;
+  stroke-width: 2 !important;
+  opacity: 0.4;
+}
+
+.custom-edge-path--rules {
+  stroke: var(--color-accent-orange) !important;
+  stroke-width: 2 !important;
+  opacity: 0.95;
+}
+
+.custom-edge-path--selected {
+  stroke: var(--primary-color) !important;
+  stroke-width: 3 !important;
+  opacity: 1;
+}
+
 .edge-label-wrapper {
   position: absolute;
   pointer-events: all;
@@ -408,6 +430,11 @@
   cursor: pointer;
   padding: 4px;
   font-size: 1.1rem;
+}
+
+.sidebar-duplicate-btn {
+  width: 100%;
+  margin-top: 8px;
 }
 
 .sidebar-delete-btn {

@@ -6,6 +6,7 @@ import type { CustomNode } from '../../types/builder';
 
 export const QuestionNode: React.FC<NodeProps<CustomNode>> = ({ data }) => {
   const qType = data.questionType || 'single';
+  const typeDisplay = qType === 'input' && data.inputType ? `input: ${data.inputType}` : qType;
   return (
     <div className="glass-panel-glow question-node">
       {data.warnings && data.warnings.length > 0 && (
@@ -26,12 +27,17 @@ export const QuestionNode: React.FC<NodeProps<CustomNode>> = ({ data }) => {
           <QuestionIcon size={16} />
         </div>
         <span className="node-type-label">
-          Question Node ({qType})
+          Question Node ({typeDisplay})
         </span>
       </div>
       <div className="node-title">
         {data.label || 'Enter question...'}
       </div>
+      {data.helperText && (
+        <div className="node-subtitle">
+          {data.helperText}
+        </div>
+      )}
       {((data.options && Array.isArray(data.options) && data.options.length > 0) || data.allowOther) && (
         <div className="node-options-list">
           {data.options?.map((opt: string, i: number) => (

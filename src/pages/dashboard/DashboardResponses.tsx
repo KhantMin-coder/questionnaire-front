@@ -10,13 +10,34 @@ interface DashboardResponsesProps {
 export const DashboardResponses: React.FC<DashboardResponsesProps> = ({ selectedSurvey }) => {
   const responses = mockResponses[selectedSurvey.id] || [];
 
+  const handleExportResponsesCsv = (): void => {
+    const questionColumns = (selectedSurvey.questions || []).map((q) => `Q${q.number}`);
+    const headers = ['ID', 'Timestamp', 'Device', 'Path Taken', 'Status', ...questionColumns];
+    const rows = responses.map((resp) => [
+      resp.id,
+      resp.timestamp,
+      resp.device,
+      `"${resp.path}"`,
+      resp.status,
+      ...questionColumns.map((qCol) => `"${resp.answers[qCol] || ''}"`)
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${selectedSurvey.id}_responses.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex-column flex-gap-lg">
       <div className="flex-row-center-between">
         <span className="text-muted-xs font-size-sm">
           Showing {responses.length} individual submissions
         </span>
-        <button className="btn btn-secondary flex-row-center dashboard-btn-xs">
+        <button onClick={handleExportResponsesCsv} className="btn btn-secondary flex-row-center dashboard-btn-xs">
           <Download size={13} /> Export CSV
         </button>
       </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, Mail, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Mail, AlertCircle, ShieldAlert } from 'lucide-react';
 
 import { useRunnerState } from './runner/useRunnerState';
 import { QuestionRenderer } from './runner/QuestionRenderer';
@@ -10,11 +10,11 @@ import type { NodeData, GraphEdge } from '../utils/graphLogic';
 import './Runner.css';
 
 const questionnaireNodes: NodeData[] = [
-  { id: '1', type: 'question', label: 'How old are you?', questionType: 'input' },
+  { id: '1', type: 'question', label: 'How old are you?', helperText: 'Participants must be 18 or older.', questionType: 'input', inputType: 'number' },
   { id: '2', type: 'question', label: 'Which framework do you prefer?', questionType: 'single', options: ['React', 'Vue', 'Svelte'] },
-  { id: '3', type: 'delay', label: 'Delay Follow-up target', delayDuration: '2 days', options: [] },
+  { id: '3', type: 'delay', label: 'Delay Follow-up target', delayDuration: '2 days', targetQuestionnaireName: 'Framework Deep-Dive Follow-up', options: [] },
   { id: '4', type: 'terminal', label: 'Completion', terminalMessage: 'Thank you for completing the survey!' },
-  { id: '5', type: 'terminal', label: 'Disqualification', terminalMessage: 'Survey ended. You must be over 18 to participate.' }
+  { id: '5', type: 'terminal', label: 'Disqualification', isDisqualification: true, terminalMessage: 'Survey ended. You must be over 18 to participate.' }
 ];
 
 const questionnaireEdges: GraphEdge[] = [
@@ -37,7 +37,6 @@ export const Runner: React.FC = () => {
     emailInput,
     setEmailInput,
     isSubmitted,
-    setIsSubmitted,
     errorMsg,
     sessionToken,
     handleNext,
@@ -47,6 +46,7 @@ export const Runner: React.FC = () => {
   } = useRunnerState(id, questionnaireNodes, questionnaireEdges);
 
   const isTerminal = currentNode?.type === 'terminal';
+  const isDisqualified = isTerminal && currentNode?.isDisqualification === true;
 
   return (
     <div className="dotted-canvas runner-wrapper">
@@ -98,30 +98,31 @@ export const Runner: React.FC = () => {
                     </div>
                     <h2 className="runner-question-title">Follow-up Scheduled</h2>
                     <p className="runner-delay-desc">
-                      Based on your input, a follow-up questionnaire will be triggered in <strong>{currentNode.delayDuration}</strong>.
+                      Based on your input, <strong>{currentNode.targetQuestionnaireName || 'a follow-up questionnaire'}</strong> will be triggered in <strong>{currentNode.delayDuration}</strong>.
                     </p>
                   </div>
                 )}
 
                 {currentNode.type === 'terminal' && (
                   <div className="runner-terminal-section">
-                    <div className="runner-status-icon runner-status-icon--terminal">
-                      <CheckCircle size={36} />
+                    <div className={`runner-status-icon ${isDisqualified ? 'runner-status-icon--disqualified' : 'runner-status-icon--terminal'}`}>
+                      {isDisqualified ? <ShieldAlert size={36} /> : <CheckCircle size={36} />}
                     </div>
                     <h2 className="runner-question-title">{currentNode.terminalMessage}</h2>
 
-                    {traversedDelayNodes ? (
+                    {isDisqualified ? (
+                      <div className="runner-complete-section">
+                        <button onClick={handleRestart} className="btn btn-secondary runner-complete-btn">
+                          Restart Survey
+                        </button>
+                      </div>
+                    ) : (
                       <EmailCaptureForm
                         emailInput={emailInput}
                         setEmailInput={setEmailInput}
                         handleSubmit={handleSubmit}
+                        isRequired={traversedDelayNodes}
                       />
-                    ) : (
-                      <div className="runner-complete-section">
-                        <button onClick={() => setIsSubmitted(true)} className="btn btn-primary runner-complete-btn">
-                          Complete Survey
-                        </button>
-                      </div>
                     )}
                   </div>
                 )}
@@ -149,8 +150,8 @@ export const Runner: React.FC = () => {
             </div>
             <h2 className="runner-success-title">Submission Confirmed!</h2>
             <p>
-              Your responses have been successfully recorded. 
-              {traversedDelayNodes && ` We've scheduled your follow-up survey and will dispatch a secure link to ${emailInput} when ready.`}
+              Your responses have been successfully recorded.
+              {traversedDelayNodes && emailInput && ` We've scheduled your follow-up survey and will dispatch a secure link to ${emailInput} when ready.`}
             </p>
             <button onClick={handleRestart} className="btn btn-secondary runner-restart-btn">
               Restart Survey Demo

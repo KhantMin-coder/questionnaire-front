@@ -156,7 +156,7 @@ export const useGraphValidation = (
         }
 
         // Duplicate and stale rules check
-        const optionUsage: Record<string, string[]> = {};
+        const optionUsage: Record<string, { value: string; edgeIds: string[] }> = {};
         conditionalEdges.forEach(edge => {
           const rules = edge.rules || [];
           rules.forEach((rule: EdgeRule) => {
@@ -200,18 +200,20 @@ export const useGraphValidation = (
 
             // Record choice equals values to catch duplicates
             if (rule.operator === '==') {
-              const key = `${rule.field}_${rule.value.toLowerCase().trim()}`;
-              if (!optionUsage[key]) optionUsage[key] = [];
-              optionUsage[key].push(edge.id);
+              const normalizedVal = rule.value.toLowerCase().trim();
+              const key = `${rule.field}::${normalizedVal}`;
+              if (!optionUsage[key]) {
+                optionUsage[key] = { value: rule.value, edgeIds: [] };
+              }
+              optionUsage[key].edgeIds.push(edge.id);
             }
           });
         });
 
-        Object.entries(optionUsage).forEach(([key, edgeIds]) => {
+        Object.values(optionUsage).forEach(({ value, edgeIds }) => {
           if (edgeIds.length > 1) {
-            const [, val] = key.split('_');
             warningList.push({
-              message: `Question "Q${node.id}: ${node.data?.label || 'Untitled'}" has duplicate equals rules for value "${val}" on multiple paths. The router will default to the first matching connection.`,
+              message: `Question "Q${node.id}: ${node.data?.label || 'Untitled'}" has duplicate equals rules for value "${value}" on multiple paths. The router will default to the first matching connection.`,
               nodeId: node.id
             });
           }

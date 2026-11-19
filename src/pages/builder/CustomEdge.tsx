@@ -10,7 +10,6 @@ interface CustomEdgeProps {
   targetY: number;
   sourcePosition: Position;
   targetPosition: Position;
-  style?: React.CSSProperties;
   markerEnd?: string;
   selected?: boolean;
   data?: {
@@ -19,18 +18,17 @@ interface CustomEdgeProps {
   };
 }
 
-export const CustomEdge = ({
+export const CustomEdge: React.FC<CustomEdgeProps> = ({
   sourceX,
   sourceY,
   targetX,
   targetY,
   sourcePosition,
   targetPosition,
-  style = {},
   markerEnd,
   selected,
   data
-}: CustomEdgeProps) => {
+}) => {
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -51,18 +49,18 @@ export const CustomEdge = ({
     }).join('');
   }
 
+  const edgeStateClass = selected
+    ? 'custom-edge-path--selected'
+    : rules.length > 0
+      ? 'custom-edge-path--rules'
+      : 'custom-edge-path--default';
+
   return (
     <>
       <BaseEdge
         path={edgePath}
         markerEnd={markerEnd}
-        style={{
-          ...style,
-          stroke: selected ? 'var(--primary-color)' : (rules.length > 0 ? 'var(--color-accent-orange)' : 'var(--text-muted)'),
-          strokeWidth: selected ? 3 : 2,
-          opacity: selected ? 1 : (rules.length > 0 ? 0.95 : 0.4),
-          transition: 'stroke 0.2s, stroke-width 0.2s, opacity 0.2s',
-        }}
+        className={`custom-edge-path ${edgeStateClass}`}
       />
       <EdgeLabelRenderer>
         <div

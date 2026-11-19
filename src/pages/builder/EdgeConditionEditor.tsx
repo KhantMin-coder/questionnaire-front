@@ -21,6 +21,8 @@ export const EdgeConditionEditor: React.FC<EdgeConditionEditorProps> = ({
   setSelectedEdge,
   setIsSidebarOpen
 }) => {
+  const questionNodes = nodes.filter((n) => n.type === 'question');
+
   return (
     <div className="sidebar-content">
       <div className="sidebar-subtitle">
@@ -57,17 +59,25 @@ export const EdgeConditionEditor: React.FC<EdgeConditionEditorProps> = ({
               </div>
             )}
 
-            {(() => {
-              const sourceNode = nodes.find(n => n.id === selectedEdge.source);
-              return (
-                <div className="form-group margin-bottom-xs">
-                  <label className="form-label">Evaluate Question</label>
-                  <div className="eval-question-display">
-                    Q{selectedEdge.source}: {sourceNode?.data?.label || 'Untitled Question'}
-                  </div>
-                </div>
-              );
-            })()}
+            <div className="form-group margin-bottom-xs">
+              <label className="form-label" htmlFor={`rule-field-${i}`}>Evaluate Question</label>
+              <select
+                id={`rule-field-${i}`}
+                className="form-input sidebar-form-input-sm"
+                value={rule.field || selectedEdge.source}
+                onChange={(e) => {
+                  const newRules = [...(selectedEdge.rules || [])];
+                  newRules[i] = { ...newRules[i], field: e.target.value, value: '' };
+                  updateSelectedEdgeRules(newRules);
+                }}
+              >
+                {questionNodes.map((qNode) => (
+                  <option key={qNode.id} value={qNode.id}>
+                    Q{qNode.id}: {qNode.data?.label || 'Untitled Question'}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="form-group margin-bottom-xs">
               <label className="form-label" htmlFor={`rule-operator-${i}`}>Operator</label>
@@ -94,11 +104,11 @@ export const EdgeConditionEditor: React.FC<EdgeConditionEditorProps> = ({
             <div className="form-group margin-bottom-xs">
               <label className="form-label" htmlFor={`rule-value-${i}`}>Match Value</label>
               {(() => {
-                const targetNode = nodes.find(n => n.id === selectedEdge.source);
+                const targetNode = nodes.find(n => n.id === (rule.field || selectedEdge.source));
                 const isChoiceQuestion = targetNode?.data?.questionType === 'single' || targetNode?.data?.questionType === 'multi';
                 const options = targetNode?.data?.options || [];
 
-                if (isChoiceQuestion && options.length > 0) {
+                if (isChoiceQuestion && (options.length > 0 || targetNode?.data?.allowOther)) {
                   return (
                     <select
                       id={`rule-value-${i}`}
@@ -114,6 +124,9 @@ export const EdgeConditionEditor: React.FC<EdgeConditionEditorProps> = ({
                       {options.map((opt: string) => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
+                      {targetNode?.data?.allowOther && (
+                        <option value="Other">Other</option>
+                      )}
                     </select>
                   );
                 }

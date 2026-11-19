@@ -5,7 +5,7 @@ import type { NodeData } from '../../utils/graphLogic';
 
 export const useLandingSimulator = () => {
   const [demoCurrentNode, setDemoCurrentNode] = useState<NodeData | null>(demoNodes[0]);
-  const [demoAnswers, setDemoAnswers] = useState<Record<string, any>>({});
+  const [demoAnswers, setDemoAnswers] = useState<Record<string, string | number | string[]>>({});
   const [demoHistory, setDemoHistory] = useState<string[]>([]);
   const [demoTraversedDelay, setDemoTraversedDelay] = useState(false);
   const [demoEmail, setDemoEmail] = useState('');

@@ -47,7 +47,9 @@ export interface SurveyItem {
 export interface CustomNode extends Node {
   data: {
     label?: string;
+    helperText?: string;
     questionType?: 'single' | 'multi' | 'input';
+    inputType?: 'text' | 'number' | 'date' | 'textarea';
     options?: string[];
     delayDuration?: string;
     targetQuestionnaireId?: string;

@@ -5,7 +5,8 @@ import {
   MiniMap,
   Controls,
   Panel,
-  ReactFlowProvider
+  ReactFlowProvider,
+  useReactFlow
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import './Builder.css';
@@ -58,10 +59,12 @@ const BuilderCanvas: React.FC = () => {
     onEdgeClick,
     onPaneClick,
     updateSelectedNodeData,
+    duplicateSelectedNode,
     propagateOptionRename,
     updateSelectedEdgeRules,
     handleSave
   } = useBuilderState(id);
+  const { screenToFlowPosition } = useReactFlow();
 
   const nodeTypes = useMemo(() => ({
     question: QuestionNode,
@@ -74,20 +77,23 @@ const BuilderCanvas: React.FC = () => {
   }), []);
 
   // HTML5 Drag and drop helpers
-  const onDragOver = (event: React.DragEvent) => {
+  const onDragOver = (event: React.DragEvent): void => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   };
 
-  const onDrop = (event: React.DragEvent) => {
+  const onDrop = (event: React.DragEvent): void => {
     event.preventDefault();
     const type = event.dataTransfer.getData('text/plain');
     if (!type || !reactFlowWrapper.current) return;
 
-    const rect = reactFlowWrapper.current.getBoundingClientRect();
+    const flowPosition = screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
     const position = {
-      x: event.clientX - rect.left - 100,
-      y: event.clientY - rect.top - 40,
+      x: flowPosition.x - 100,
+      y: flowPosition.y - 40,
     };
 
     const newNodeId = `q_${Date.now()}`;
@@ -97,7 +103,9 @@ const BuilderCanvas: React.FC = () => {
       position,
       data: {
         label: type === 'delay' ? 'Wait 24 hours' : (type === 'terminal' ? 'Thank you for your response!' : 'Untitled Question'),
+        helperText: '',
         questionType: type === 'question' ? 'single' : undefined,
+        inputType: type === 'question' ? 'text' : undefined,
         options: type === 'question' ? ['Option 1', 'Option 2'] : undefined,
         delayDuration: type === 'delay' ? '24 hours' : undefined,
         targetQuestionnaireName: type === 'delay' ? 'Follow-up survey' : undefined,
@@ -219,6 +227,7 @@ const BuilderCanvas: React.FC = () => {
 
         {/* Slide sheet settings Panel */}
         <SidebarSettings
+          currentSurveyId={id}
           isSidebarOpen={isSidebarOpen}
           activeSidebarTab={activeSidebarTab}
           setActiveSidebarTab={setActiveSidebarTab}
@@ -228,6 +237,7 @@ const BuilderCanvas: React.FC = () => {
           setSelectedEdge={setSelectedEdge}
           setIsSidebarOpen={setIsSidebarOpen}
           updateSelectedNodeData={updateSelectedNodeData}
+          duplicateSelectedNode={duplicateSelectedNode}
           propagateOptionRename={propagateOptionRename}
           updateSelectedEdgeRules={updateSelectedEdgeRules}
           nodes={nodes}

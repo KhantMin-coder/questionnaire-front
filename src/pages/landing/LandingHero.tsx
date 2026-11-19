@@ -1,11 +1,11 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { LandingHeroFlow } from './LandingHeroFlow';
 
 interface LandingHeroProps {
-  textLineVariants: any;
+  textLineVariants: Variants;
 }
 
 export const LandingHero: React.FC<LandingHeroProps> = ({ textLineVariants }) => {

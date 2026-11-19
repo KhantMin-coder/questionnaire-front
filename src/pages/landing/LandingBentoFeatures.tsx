@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import {
   GitFork,
   Clock,
@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 
 interface LandingBentoFeaturesProps {
-  sectionVariants: any;
-  bentoCardVariants: any;
+  sectionVariants: Variants;
+  bentoCardVariants: Variants;
 }
 
 export const LandingBentoFeatures: React.FC<LandingBentoFeaturesProps> = ({

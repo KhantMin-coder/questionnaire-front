@@ -57,14 +57,17 @@ export const Navbar: React.FC = () => {
 
       if (saved) {
         try {
-          const surveys = JSON.parse(saved) as SurveyItem[];
-          // Fallback if no active survey context is stored yet
-          if (!targetId && surveys.length > 0) {
-            targetId = surveys[0].id;
-          }
-          const activeSurvey = surveys.find((s: SurveyItem) => s.id === targetId);
-          if (activeSurvey) {
-            title = activeSurvey.title;
+          const parsed: unknown = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            const surveys = parsed as SurveyItem[];
+            // Fallback if no active survey context is stored yet
+            if (!targetId && surveys.length > 0) {
+              targetId = surveys[0].id;
+            }
+            const activeSurvey = surveys.find((s: SurveyItem) => s.id === targetId);
+            if (activeSurvey) {
+              title = activeSurvey.title;
+            }
           }
         } catch {
           // ignore

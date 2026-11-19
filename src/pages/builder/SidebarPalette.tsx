@@ -2,8 +2,7 @@ import React from 'react';
 import { HelpCircle as QuestionIcon, Clock } from 'lucide-react';
 
 export const SidebarPalette: React.FC = () => {
-  const onDragStart = (event: React.DragEvent, nodeType: string) => {
-    console.log('Drag Start:', nodeType);
+  const onDragStart = (event: React.DragEvent, nodeType: string): void => {
     event.dataTransfer.setData('text/plain', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
@@ -41,8 +40,8 @@ export const SidebarPalette: React.FC = () => {
           draggable
           className="palette-item"
         >
-          <div className="palette-item-icon palette-item-icon--success">
-            <span className="palette-terminal-dot" />
+          <div className="terminal-palette-dot">
+            <span className="terminal-palette-dot-inner" />
           </div>
           <span className="palette-item-label">Terminal Node</span>
         </div>

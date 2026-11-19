@@ -13,11 +13,16 @@ export interface NodeData {
   id: string;
   type: 'question' | 'delay' | 'terminal';
   label: string;
+  helperText?: string;
   // Specific node details
   questionType?: 'single' | 'multi' | 'input';
+  inputType?: 'text' | 'number' | 'date' | 'textarea';
   options?: string[];
   delayDuration?: string;
+  targetQuestionnaireId?: string;
+  targetQuestionnaireName?: string;
   terminalMessage?: string;
+  isDisqualification?: boolean;
   allowOther?: boolean;
 }
 
@@ -135,19 +140,44 @@ export function evaluateOperator(
 ): boolean {
   if (answer === undefined || answer === null) return false;
 
-  const strAnswer = String(answer).trim().toLowerCase();
   const strValue = String(value).trim().toLowerCase();
+
+  const matchesSingleValue = (item: string | number): boolean => {
+    const normalizedItem = String(item).trim().toLowerCase();
+    if (strValue === 'other' && normalizedItem.startsWith('other:')) {
+      return true;
+    }
+    return normalizedItem === strValue;
+  };
+
+  if (Array.isArray(answer)) {
+    const normalizedList = answer.map((a) => String(a).trim().toLowerCase());
+    switch (operator) {
+      case '==':
+      case 'contains':
+        return (
+          answer.some((item) => matchesSingleValue(item)) ||
+          normalizedList.some((item) => item.includes(strValue))
+        );
+      case '!=':
+        return !answer.some((item) => matchesSingleValue(item));
+      default:
+        return false;
+    }
+  }
+
+  const strAnswer = String(answer).trim().toLowerCase();
 
   const numAnswer = Number(answer);
   const numValue = Number(value);
-  const isAnswerNumeric = strAnswer !== '' && !isNaN(numAnswer);
-  const isValueNumeric = strValue !== '' && !isNaN(numValue);
+  const isAnswerNumeric = strAnswer !== '' && !Number.isNaN(numAnswer);
+  const isValueNumeric = strValue !== '' && !Number.isNaN(numValue);
 
   switch (operator) {
     case '==':
-      return strAnswer === strValue;
+      return matchesSingleValue(answer);
     case '!=':
-      return strAnswer !== strValue;
+      return !matchesSingleValue(answer);
     case '<':
       return isAnswerNumeric && isValueNumeric ? numAnswer < numValue : false;
     case '>':
@@ -157,9 +187,6 @@ export function evaluateOperator(
     case '>=':
       return isAnswerNumeric && isValueNumeric ? numAnswer >= numValue : false;
     case 'contains':
-      if (Array.isArray(answer)) {
-        return answer.map(a => String(a).toLowerCase()).includes(strValue);
-      }
       return strAnswer.includes(strValue);
     default:
       return false;

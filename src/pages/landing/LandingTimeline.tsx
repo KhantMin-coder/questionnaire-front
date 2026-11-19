@@ -1,9 +1,9 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 interface LandingTimelineProps {
-  sectionVariants: any;
-  bentoCardVariants: any;
+  sectionVariants: Variants;
+  bentoCardVariants: Variants;
 }
 
 export const LandingTimeline: React.FC<LandingTimelineProps> = ({

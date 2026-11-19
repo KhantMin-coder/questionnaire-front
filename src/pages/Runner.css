@@ -132,6 +132,17 @@
   color: var(--primary-color);
 }
 
+.runner-status-icon--disqualified {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.runner-helper-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
 .runner-delay-section {
   text-align: center;
   padding: 20px 0;

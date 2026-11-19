@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users, Percent, Clock, CheckCircle } from 'lucide-react';
-import type { SurveyItem } from '../../types/builder';
+import type { SurveyItem, CustomNode, ExtendedEdge } from '../../types/builder';
 
 export const mockSurveys: SurveyItem[] = [
   {
@@ -50,6 +50,118 @@ export const mockSurveys: SurveyItem[] = [
   }
 ];
 
+export const mockSurveyGraphs: Record<string, { nodes: CustomNode[]; edges: ExtendedEdge[] }> = {
+  survey_1: {
+    nodes: [
+      {
+        id: '1',
+        type: 'question',
+        position: { x: 60, y: 180 },
+        data: {
+          label: 'How old are you?',
+          helperText: 'Participants must be 18 or older.',
+          questionType: 'input',
+          inputType: 'number',
+          warnings: []
+        }
+      },
+      {
+        id: '2',
+        type: 'question',
+        position: { x: 380, y: 80 },
+        data: {
+          label: 'Which framework do you prefer?',
+          helperText: 'Select your primary frontend framework.',
+          questionType: 'single',
+          options: ['React', 'Vue', 'Svelte'],
+          warnings: []
+        }
+      },
+      {
+        id: '3',
+        type: 'delay',
+        position: { x: 720, y: 200 },
+        data: {
+          label: 'Wait 2 days',
+          delayDuration: '2 days',
+          targetQuestionnaireId: 'Vue Scheduler survey',
+          targetQuestionnaireName: 'Vue Scheduler survey',
+          warnings: []
+        }
+      },
+      {
+        id: '4',
+        type: 'terminal',
+        position: { x: 1040, y: 80 },
+        data: {
+          label: 'Completion',
+          isDisqualification: false,
+          terminalMessage: 'Thank you for completing the survey!',
+          warnings: []
+        }
+      },
+      {
+        id: '5',
+        type: 'terminal',
+        position: { x: 380, y: 310 },
+        data: {
+          label: 'Disqualification',
+          isDisqualification: true,
+          terminalMessage: 'Survey ended. You must be over 18 to participate.',
+          warnings: []
+        }
+      }
+    ],
+    edges: [
+      {
+        id: 'e-1-5',
+        source: '1',
+        target: '5',
+        type: 'custom',
+        animated: true,
+        rules: [{ field: '1', operator: '<', value: '18', combinator: 'AND' }],
+        data: { rules: [{ field: '1', operator: '<', value: '18', combinator: 'AND' }] }
+      },
+      {
+        id: 'e-1-2',
+        source: '1',
+        target: '2',
+        type: 'custom',
+        animated: true,
+        rules: [{ field: '1', operator: '>=', value: '18', combinator: 'AND' }],
+        data: { rules: [{ field: '1', operator: '>=', value: '18', combinator: 'AND' }] }
+      },
+      {
+        id: 'e-2-3',
+        source: '2',
+        target: '3',
+        type: 'custom',
+        animated: true,
+        rules: [{ field: '2', operator: '!=', value: 'React', combinator: 'AND' }],
+        data: { rules: [{ field: '2', operator: '!=', value: 'React', combinator: 'AND' }] }
+      },
+      {
+        id: 'e-2-4',
+        source: '2',
+        target: '4',
+        type: 'custom',
+        animated: true,
+        rules: [],
+        data: { rules: [] }
+      },
+      {
+        id: 'e-3-4',
+        source: '3',
+        target: '4',
+        type: 'custom',
+        animated: true,
+        rules: [],
+        data: { rules: [] }
+      }
+    ]
+  }
+};
+
 export const mockDeviceData: Record<string, Array<{ name: string; value: number; color: string }>> = {
   survey_1: [
     { name: 'Desktop', value: 842, color: 'var(--primary-color)' },
@@ -66,7 +178,7 @@ export const mockResponses: Record<string, Array<{ id: string; timestamp: string
   ]
 };
 
-export const getKpiIcon = (iconName: string) => {
+export const getKpiIcon = (iconName: string): React.ReactNode => {
   if (typeof iconName !== 'string') return null;
   switch (iconName.toLowerCase()) {
     case 'users':

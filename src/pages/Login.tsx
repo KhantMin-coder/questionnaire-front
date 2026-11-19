@@ -12,7 +12,7 @@ interface LoginLocationState {
 }
 
 // Helper hook to watch document.documentElement theme class changes
-const useTheme = () => {
+const useTheme = (): 'light' | 'dark' => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const root = window.document.documentElement;
@@ -65,26 +65,42 @@ export const Login: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       const state = location.state as LoginLocationState | null;
-      const from = state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      const rawFrom = state?.from?.pathname;
+      const safeFrom =
+        rawFrom && rawFrom.startsWith('/') && !rawFrom.startsWith('//')
+          ? rawFrom
+          : '/dashboard';
+      navigate(safeFrom, { replace: true });
     }
   }, [isAuthenticated, navigate, location.state]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     setError('');
 
-    if (!email || !password || (isRegister && !name)) {
+    const trimmedEmail = email.trim();
+    const trimmedName = name.trim();
+
+    if (!trimmedEmail || !password || (isRegister && !trimmedName)) {
       setError('Please fill in all fields');
       return;
     }
 
-    // Mock API Auth Call
-    const mockToken = 'mock_jwt_token_' + Math.random().toString(36).substr(2);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    const mockToken = `jwt_${crypto.randomUUID()}`;
     const mockUser = {
-      id: 'usr_' + Date.now(),
-      email: email,
-      name: isRegister ? name : email.split('@')[0],
+      id: `usr_${crypto.randomUUID()}`,
+      email: trimmedEmail.toLowerCase(),
+      name: isRegister ? trimmedName : trimmedEmail.split('@')[0],
     };
 
     login(mockToken, mockUser);

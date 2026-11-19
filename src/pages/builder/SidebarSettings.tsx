@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
 import type { CustomNode, ExtendedEdge, ValidationWarning } from '../../types/builder';
 import type { EdgeRule } from '../../utils/graphLogic';
@@ -8,6 +8,7 @@ import { NodeSettingsEditor } from './NodeSettingsEditor';
 import { EdgeConditionEditor } from './EdgeConditionEditor';
 
 interface SidebarSettingsProps {
+  currentSurveyId?: string;
   isSidebarOpen: boolean;
   activeSidebarTab: 'properties' | 'issues';
   setActiveSidebarTab: (tab: 'properties' | 'issues') => void;
@@ -17,6 +18,7 @@ interface SidebarSettingsProps {
   setSelectedEdge: (edge: ExtendedEdge | null) => void;
   setIsSidebarOpen: (open: boolean) => void;
   updateSelectedNodeData: (updates: Partial<CustomNode['data']>) => void;
+  duplicateSelectedNode: () => void;
   propagateOptionRename: (nodeId: string, oldVal: string, newVal: string) => void;
   updateSelectedEdgeRules: (rules: EdgeRule[]) => void;
   nodes: CustomNode[];
@@ -27,6 +29,7 @@ interface SidebarSettingsProps {
 }
 
 export const SidebarSettings: React.FC<SidebarSettingsProps> = ({
+  currentSurveyId,
   isSidebarOpen,
   activeSidebarTab,
   setActiveSidebarTab,
@@ -36,6 +39,7 @@ export const SidebarSettings: React.FC<SidebarSettingsProps> = ({
   setSelectedEdge,
   setIsSidebarOpen,
   updateSelectedNodeData,
+  duplicateSelectedNode,
   propagateOptionRename,
   updateSelectedEdgeRules,
   nodes,
@@ -45,9 +49,10 @@ export const SidebarSettings: React.FC<SidebarSettingsProps> = ({
   focusNode
 }) => {
   return (
-    <>
+    <AnimatePresence>
       {isSidebarOpen && (
         <motion.div
+          key="builder-settings-sidebar"
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
@@ -87,6 +92,7 @@ export const SidebarSettings: React.FC<SidebarSettingsProps> = ({
                 setSelectedEdge(null);
               }}
               className="sidebar-close-btn"
+              aria-label="Close settings panel"
             >
               ✕
             </button>
@@ -97,8 +103,10 @@ export const SidebarSettings: React.FC<SidebarSettingsProps> = ({
             <>
               {selectedNode ? (
                 <NodeSettingsEditor
+                  currentSurveyId={currentSurveyId}
                   selectedNode={selectedNode}
                   updateSelectedNodeData={updateSelectedNodeData}
+                  duplicateSelectedNode={duplicateSelectedNode}
                   propagateOptionRename={propagateOptionRename}
                   setNodes={setNodes}
                   setEdges={setEdges}
@@ -165,6 +173,6 @@ export const SidebarSettings: React.FC<SidebarSettingsProps> = ({
           )}
         </motion.div>
       )}
-    </>
+    </AnimatePresence>
   );
 };

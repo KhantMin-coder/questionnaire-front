@@ -32,11 +32,16 @@ export const useBuilderState = (id: string | undefined) => {
     warnings: []
   });
 
-  // Keep a mutable ref of nodes to avoid dependency loops in focusNode callback
+  // Keep mutable refs of nodes and edges to avoid side-effects inside state updaters
   const nodesRef = useRef(nodes);
   useEffect(() => {
     nodesRef.current = nodes;
   }, [nodes]);
+
+  const edgesRef = useRef(edges);
+  useEffect(() => {
+    edgesRef.current = edges;
+  }, [edges]);
 
   useEffect(() => {
     if (id) {
@@ -45,7 +50,7 @@ export const useBuilderState = (id: string | undefined) => {
     }
   }, [id]);
 
-  const focusNode = useCallback((nodeId: string) => {
+  const focusNode = useCallback((nodeId: string): void => {
     const node = getNode(nodeId);
     if (node) {
       const latestNodes = nodesRef.current;
@@ -70,18 +75,15 @@ export const useBuilderState = (id: string | undefined) => {
     }
   }, [getNode, setCenter, setNodes]);
 
-  const handleSelectEdgeById = useCallback((edgeId: string) => {
-    setEdges((eds) => {
-      const found = eds.find((e) => e.id === edgeId);
-      if (found) {
-        setSelectedEdge(found as ExtendedEdge);
-        setSelectedNode(null);
-        setIsSidebarOpen(true);
-        setActiveSidebarTab('properties');
-      }
-      return eds;
-    });
-  }, [setEdges]);
+  const handleSelectEdgeById = useCallback((edgeId: string): void => {
+    const found = edgesRef.current.find((e) => e.id === edgeId);
+    if (found) {
+      setSelectedEdge(found as ExtendedEdge);
+      setSelectedNode(null);
+      setIsSidebarOpen(true);
+      setActiveSidebarTab('properties');
+    }
+  }, []);
 
   // validation hook composition
   const { validateGraph } = useGraphValidation(
@@ -122,83 +124,108 @@ export const useBuilderState = (id: string | undefined) => {
   }, [nodes, edges, isLoaded, validateGraph]);
 
   const onConnect = useCallback(
-    (params: Connection) => {
+    (params: Connection): void => {
       const newEdgeId = `e-${params.source}-${params.target}`;
       const newEdge: ExtendedEdge = {
         ...params,
         id: newEdgeId,
         type: 'custom',
         animated: true,
+        rules: [],
         data: {
           rules: [],
-          onSelect: () => {
-            setEdges((eds) => {
-              const found = eds.find((e) => e.id === newEdgeId);
-              if (found) {
-                setSelectedEdge(found as ExtendedEdge);
-                setSelectedNode(null);
-                setIsSidebarOpen(true);
-                setActiveSidebarTab('properties');
-              }
-              return eds;
-            });
-          }
+          onSelect: () => handleSelectEdgeById(newEdgeId)
         }
       };
       setEdges((eds) => addEdge(newEdge, eds));
     },
-    [setEdges]
+    [setEdges, handleSelectEdgeById]
   );
 
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node): void => {
     setSelectedNode(node as CustomNode);
     setSelectedEdge(null);
     setIsSidebarOpen(true);
     setActiveSidebarTab('properties');
   }, []);
 
-  const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+  const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge): void => {
     setSelectedEdge(edge as ExtendedEdge);
     setSelectedNode(null);
     setIsSidebarOpen(true);
     setActiveSidebarTab('properties');
   }, []);
 
-  const onPaneClick = useCallback(() => {
+  const onPaneClick = useCallback((): void => {
     setSelectedNode(null);
     setSelectedEdge(null);
     setIsSidebarOpen(false);
   }, []);
 
-  const updateSelectedNodeData = useCallback((updates: Partial<CustomNode['data']>) => {
+  const updateSelectedNodeData = useCallback((updates: Partial<CustomNode['data']>): void => {
     if (!selectedNode) return;
+    const targetId = selectedNode.id;
+
     setNodes((nds) =>
-      nds.map((n) => {
-        if (n.id === selectedNode.id) {
-          const updatedNode = {
-            ...n,
-            data: { ...n.data, ...updates }
-          } as CustomNode;
-          setSelectedNode(updatedNode);
-          return updatedNode;
-        }
-        return n;
-      })
+      nds.map((n) =>
+        n.id === targetId
+          ? ({
+              ...n,
+              data: { ...n.data, ...updates }
+            } as CustomNode)
+          : n
+      )
+    );
+
+    setSelectedNode((prev) =>
+      prev && prev.id === targetId
+        ? ({
+            ...prev,
+            data: { ...prev.data, ...updates }
+          } as CustomNode)
+        : prev
     );
   }, [selectedNode, setNodes]);
 
-  const propagateOptionRename = useCallback((nodeId: string, oldVal: string, newVal: string) => {
+  const duplicateSelectedNode = useCallback((): void => {
+    if (!selectedNode) return;
+    const newNodeId = `q_${Date.now()}`;
+    const duplicatedNode: CustomNode = {
+      ...selectedNode,
+      id: newNodeId,
+      selected: true,
+      position: {
+        x: selectedNode.position.x + 40,
+        y: selectedNode.position.y + 40
+      },
+      data: {
+        ...selectedNode.data,
+        label: selectedNode.data.label ? `${selectedNode.data.label} (Copy)` : 'Untitled (Copy)',
+        options: selectedNode.data.options ? [...selectedNode.data.options] : undefined,
+        warnings: [],
+        onFocusWarning: () => focusNode(newNodeId)
+      }
+    };
+
+    setNodes((nds) => [
+      ...nds.map((n): CustomNode => ({ ...n, selected: false })),
+      duplicatedNode
+    ]);
+    setSelectedNode(duplicatedNode);
+  }, [selectedNode, setNodes, focusNode]);
+
+  const propagateOptionRename = useCallback((nodeId: string, oldVal: string, newVal: string): void => {
     setEdges((eds) =>
       eds.map((edge) => {
         const extEdge = edge as ExtendedEdge;
         if (extEdge.source === nodeId && extEdge.rules) {
           const updatedRules = extEdge.rules.map((rule: EdgeRule) => {
-            if (rule.operator === '==' && rule.value === oldVal) {
+            if ((rule.operator === '==' || rule.operator === '!=') && rule.value === oldVal) {
               return { ...rule, value: newVal };
             }
             return rule;
           });
-          const updatedEdge = {
+          return {
             ...extEdge,
             rules: updatedRules,
             data: {
@@ -206,31 +233,53 @@ export const useBuilderState = (id: string | undefined) => {
               rules: updatedRules,
             }
           } as ExtendedEdge;
-          if (selectedEdge && selectedEdge.id === extEdge.id) {
-            setSelectedEdge(updatedEdge);
-          }
-          return updatedEdge;
         }
         return edge;
       })
     );
-  }, [selectedEdge, setEdges]);
 
-  const updateSelectedEdgeRules = useCallback((rules: EdgeRule[]) => {
-    if (!selectedEdge) return;
-    setEdges((eds) =>
-      eds.map((e) => {
-        if (e.id === selectedEdge.id) {
-          const updatedEdge = {
-            ...e,
-            rules,
-            data: { ...e.data, rules }
-          } as ExtendedEdge;
-          setSelectedEdge(updatedEdge);
-          return updatedEdge;
+    setSelectedEdge((prev) => {
+      if (!prev || prev.source !== nodeId || !prev.rules) return prev;
+      const updatedRules = prev.rules.map((rule: EdgeRule) =>
+        (rule.operator === '==' || rule.operator === '!=') && rule.value === oldVal
+          ? { ...rule, value: newVal }
+          : rule
+      );
+      return {
+        ...prev,
+        rules: updatedRules,
+        data: {
+          ...prev.data,
+          rules: updatedRules
         }
-        return e;
-      })
+      } as ExtendedEdge;
+    });
+  }, [setEdges]);
+
+  const updateSelectedEdgeRules = useCallback((rules: EdgeRule[]): void => {
+    if (!selectedEdge) return;
+    const targetEdgeId = selectedEdge.id;
+
+    setEdges((eds) =>
+      eds.map((e) =>
+        e.id === targetEdgeId
+          ? ({
+              ...e,
+              rules,
+              data: { ...e.data, rules }
+            } as ExtendedEdge)
+          : e
+      )
+    );
+
+    setSelectedEdge((prev) =>
+      prev && prev.id === targetEdgeId
+        ? ({
+            ...prev,
+            rules,
+            data: { ...prev.data, rules }
+          } as ExtendedEdge)
+        : prev
     );
   }, [selectedEdge, setEdges]);
 
@@ -262,6 +311,7 @@ export const useBuilderState = (id: string | undefined) => {
     onEdgeClick,
     onPaneClick,
     updateSelectedNodeData,
+    duplicateSelectedNode,
     propagateOptionRename,
     updateSelectedEdgeRules,
     handleSave

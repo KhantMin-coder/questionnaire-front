@@ -15,16 +15,31 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   const currentAnswer = answers[currentNode.id];
 
   if (currentNode.questionType === 'input') {
+    const subtype = currentNode.inputType || 'text';
     return (
       <div className="form-group margin-bottom-0">
-        <input
-          id={`ans-${currentNode.id}`}
-          className="form-input"
-          type="text"
-          placeholder="Your answer..."
-          value={currentAnswer || ''}
-          onChange={(e) => setAnswers({ ...answers, [currentNode.id]: e.target.value })}
-        />
+        {currentNode.helperText && (
+          <p className="runner-helper-text">{currentNode.helperText}</p>
+        )}
+        {subtype === 'textarea' ? (
+          <textarea
+            id={`ans-${currentNode.id}`}
+            className="form-input"
+            rows={4}
+            placeholder="Your answer..."
+            value={String(currentAnswer ?? '')}
+            onChange={(e) => setAnswers({ ...answers, [currentNode.id]: e.target.value })}
+          />
+        ) : (
+          <input
+            id={`ans-${currentNode.id}`}
+            className="form-input"
+            type={subtype}
+            placeholder={subtype === 'number' ? 'Enter a number...' : 'Your answer...'}
+            value={String(currentAnswer ?? '')}
+            onChange={(e) => setAnswers({ ...answers, [currentNode.id]: e.target.value })}
+          />
+        )}
       </div>
     );
   }
@@ -36,6 +51,9 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
     return (
       <div className="runner-options-list">
+        {currentNode.helperText && (
+          <p className="runner-helper-text">{currentNode.helperText}</p>
+        )}
         {currentNode.options.map((opt, idx) => {
           const isSelected = currentAnswer === opt;
           return (
@@ -96,6 +114,9 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
     return (
       <div className="runner-options-list">
+        {currentNode.helperText && (
+          <p className="runner-helper-text">{currentNode.helperText}</p>
+        )}
         {currentNode.options.map((opt, idx) => {
           const isChecked = currentList.includes(opt);
           return (

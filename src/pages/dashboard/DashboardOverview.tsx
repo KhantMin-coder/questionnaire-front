@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Calendar, Download, Monitor, Smartphone, Tablet, ArrowUpRight } from 'lucide-react';
 import { getKpiIcon, mockDeviceData } from './constants';
@@ -17,6 +17,32 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 }) => {
   const deviceData = mockDeviceData[selectedSurvey.id] || [];
 
+  const filteredTimeline = useMemo(() => {
+    const timeline = selectedSurvey.timeline || [];
+    if (dateRange === '7d') return timeline.slice(-7);
+    if (dateRange === '30d') return timeline.slice(-30);
+    if (dateRange === '90d') return timeline.slice(-90);
+    return timeline;
+  }, [selectedSurvey.timeline, dateRange]);
+
+  const handleDownloadOverviewCsv = (): void => {
+    const headers = ['Date', 'Completed', 'Pending Follow-up', 'Disqualified'];
+    const rows = filteredTimeline.map((row) => [
+      row.date,
+      String(row.completed),
+      String(row.pending),
+      String(row.disqualified)
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${selectedSurvey.id}_overview_${dateRange}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex-column flex-gap-xl">
       <div className="flex-row-center-between flex-wrap flex-gap-md">
@@ -33,10 +59,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           ))}
         </div>
         <div className="flex-row-center flex-gap-xs">
-          <button className="btn btn-secondary flex-row-center dashboard-btn-xs">
+          <button onClick={handleDownloadOverviewCsv} className="btn btn-secondary flex-row-center dashboard-btn-xs">
             <Download size={13} /> CSV
           </button>
-          <button className="btn btn-secondary flex-row-center dashboard-btn-xs">
+          <button onClick={() => window.print()} className="btn btn-secondary flex-row-center dashboard-btn-xs">
             <Download size={13} /> PDF Report
           </button>
         </div>
@@ -67,7 +93,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
         <div className="dashboard-chart-wrapper">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={selectedSurvey.timeline}>
+            <AreaChart data={filteredTimeline}>
               <defs>
                 <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--primary-color)" stopOpacity={0.35} />

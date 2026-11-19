@@ -24,20 +24,26 @@ export const useBuilderPersistence = (
     const savedSurveys = localStorage.getItem('resonator_surveys');
     if (savedSurveys) {
       try {
-        const list = JSON.parse(savedSurveys) as SurveyItem[];
-        const found = list.find((s) => s.id === id);
-        if (found) {
-          setSurveyTitle(found.title);
-          setSurveyStatus(found.status);
+        const parsed: unknown = JSON.parse(savedSurveys);
+        if (Array.isArray(parsed)) {
+          const list = parsed as SurveyItem[];
+          const found = list.find((s) => s.id === id);
+          if (found) {
+            setSurveyTitle(found.title);
+            setSurveyStatus(found.status);
+          }
         }
-      } catch { }
+      } catch {
+        // ignore corrupt survey list
+      }
     }
 
     const savedGraph = localStorage.getItem(`resonator_graph_${id}`);
     if (savedGraph) {
       try {
         const graphData = JSON.parse(savedGraph);
-        const loadedNodes = (graphData.nodes || []).map((n: CustomNode) => ({
+        const rawNodes = Array.isArray(graphData?.nodes) ? graphData.nodes : [];
+        const loadedNodes = rawNodes.map((n: CustomNode) => ({
           ...n,
           data: {
             ...n.data,
@@ -46,7 +52,8 @@ export const useBuilderPersistence = (
         }));
         setNodes(loadedNodes);
 
-        const loadedEdges = (graphData.edges || []).map((e: ExtendedEdge) => ({
+        const rawEdges = Array.isArray(graphData?.edges) ? graphData.edges : [];
+        const loadedEdges = rawEdges.map((e: ExtendedEdge) => ({
           ...e,
           type: 'custom',
           animated: true,
@@ -58,7 +65,9 @@ export const useBuilderPersistence = (
           }
         }));
         setEdges(loadedEdges);
-      } catch { }
+      } catch {
+        // ignore corrupt graph storage
+      }
     } else {
       setNodes([]);
       setEdges([]);
