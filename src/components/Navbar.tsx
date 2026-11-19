@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Sun, Moon, LogOut, LayoutDashboard, GitFork, ClipboardList } from 'lucide-react';
+import type { SurveyItem } from '../types/builder';
 import './Navbar.css';
 
 export const Navbar: React.FC = () => {
@@ -56,16 +57,16 @@ export const Navbar: React.FC = () => {
 
       if (saved) {
         try {
-          const surveys = JSON.parse(saved);
+          const surveys = JSON.parse(saved) as SurveyItem[];
           // Fallback if no active survey context is stored yet
           if (!targetId && surveys.length > 0) {
             targetId = surveys[0].id;
           }
-          const activeSurvey = surveys.find((s: any) => s.id === targetId);
+          const activeSurvey = surveys.find((s: SurveyItem) => s.id === targetId);
           if (activeSurvey) {
             title = activeSurvey.title;
           }
-        } catch (e) {
+        } catch {
           // ignore
         }
       }

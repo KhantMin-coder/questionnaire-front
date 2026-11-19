@@ -6,9 +6,7 @@ import type { CustomNode } from '../../types/builder';
 export const TerminalNode: React.FC<NodeProps<CustomNode>> = ({ data }) => {
   const isDisqualify = data.isDisqualification === true;
   return (
-    <div className="glass-panel terminal-node" style={{
-      borderLeft: `4px solid ${isDisqualify ? 'var(--color-danger)' : 'var(--color-success)'}`
-    }}>
+    <div className={`glass-panel terminal-node ${isDisqualify ? 'terminal-node--disqualify' : 'terminal-node--complete'}`}>
       {data.warnings && data.warnings.length > 0 && (
         <div 
           className="node-warning-badge" 
@@ -23,9 +21,7 @@ export const TerminalNode: React.FC<NodeProps<CustomNode>> = ({ data }) => {
       )}
       <Handle type="target" position={Position.Left} className="handle--muted" />
       <div className="node-type-header">
-        <span className="terminal-dot" style={{
-          backgroundColor: isDisqualify ? 'var(--color-danger)' : 'var(--color-success)'
-        }} />
+        <span className={`terminal-dot ${isDisqualify ? 'terminal-dot--disqualify' : 'terminal-dot--complete'}`} />
         <span className="node-type-label">
           {isDisqualify ? 'Disqualification Terminus' : 'Completion Terminus'}
         </span>

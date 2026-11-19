@@ -30,7 +30,7 @@ export const useBuilderPersistence = (
           setSurveyTitle(found.title);
           setSurveyStatus(found.status);
         }
-      } catch (e) { }
+      } catch { }
     }
 
     const savedGraph = localStorage.getItem(`resonator_graph_${id}`);
@@ -58,7 +58,7 @@ export const useBuilderPersistence = (
           }
         }));
         setEdges(loadedEdges);
-      } catch (e) { }
+      } catch { }
     } else {
       setNodes([]);
       setEdges([]);
@@ -83,7 +83,7 @@ export const useBuilderPersistence = (
           return s;
         });
         localStorage.setItem('resonator_surveys', JSON.stringify(updatedList));
-      } catch (e) { }
+      } catch { }
     }
   }, [nodes, edges, surveyTitle, id, isLoaded]);
 
@@ -104,7 +104,7 @@ export const useBuilderPersistence = (
     if (savedSurveys) {
       try {
         surveysList = JSON.parse(savedSurveys) as SurveyItem[];
-      } catch (e) { }
+      } catch { }
     }
 
     let exists = false;

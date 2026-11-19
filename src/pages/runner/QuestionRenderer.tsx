@@ -3,8 +3,8 @@ import type { NodeData } from '../../utils/graphLogic';
 
 interface QuestionRendererProps {
   currentNode: NodeData;
-  answers: Record<string, any>;
-  setAnswers: (a: Record<string, any>) => void;
+  answers: Record<string, string | number | string[]>;
+  setAnswers: (a: Record<string, string | number | string[]>) => void;
 }
 
 export const QuestionRenderer: React.FC<QuestionRendererProps> = ({

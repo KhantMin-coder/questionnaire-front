@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
-      } catch (err) {
+      } catch {
         // Clear corrupt storage
         localStorage.removeItem('resonator_token');
         localStorage.removeItem('resonator_user');

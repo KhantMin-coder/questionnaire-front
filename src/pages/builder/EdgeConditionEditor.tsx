@@ -84,7 +84,9 @@ export const EdgeConditionEditor: React.FC<EdgeConditionEditorProps> = ({
                 <option value="==">Equals (==)</option>
                 <option value="!=">Not Equals (!=)</option>
                 <option value="<">Less Than (&lt;)</option>
+                <option value="<=">Less Than or Equal (&le;)</option>
                 <option value=">">Greater Than (&gt;)</option>
+                <option value=">=">Greater Than or Equal (&ge;)</option>
                 <option value="contains">Contains</option>
               </select>
             </div>

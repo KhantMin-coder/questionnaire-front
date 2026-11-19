@@ -18,3 +18,29 @@
 .login-toggle-text {
   color: var(--text-muted);
 }
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.login-wrapper {
+  position: relative;
+  overflow: hidden;
+  min-height: calc(100vh - var(--header-height));
+  width: 100%;
+}
+
+.login-card {
+  position: relative;
+  z-index: 10;
+}
+
+.login-background-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: auto;
+}

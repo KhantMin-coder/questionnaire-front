@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { evaluateEdgeConditions } from '../../utils/graphLogic';
 import type { NodeData, GraphEdge } from '../../utils/graphLogic';
+import type { CustomNode, ExtendedEdge, SurveyItem } from '../../types/builder';
 
 export const useRunnerState = (id: string | undefined, defaultNodes: NodeData[], defaultEdges: GraphEdge[]) => {
   const [nodes, setNodes] = useState<NodeData[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
   const [sessionToken, setSessionToken] = useState<string>('');
   const [currentNode, setCurrentNode] = useState<NodeData | null>(null);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, string | number | string[]>>({});
   const [history, setHistory] = useState<string[]>([]);
   const [traversedDelayNodes, setTraversedDelayNodes] = useState(false);
   const [emailInput, setEmailInput] = useState('');
@@ -21,7 +22,7 @@ export const useRunnerState = (id: string | undefined, defaultNodes: NodeData[],
     }
     let token = localStorage.getItem('resonator_respondent_uuid');
     if (!token) {
-      token = 'resp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      token = 'resp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
       localStorage.setItem('resonator_respondent_uuid', token);
     }
     setSessionToken(token);
@@ -35,9 +36,9 @@ export const useRunnerState = (id: string | undefined, defaultNodes: NodeData[],
         try {
           const parsed = JSON.parse(savedGraph);
           if (parsed.nodes && parsed.nodes.length > 0) {
-            loadedNodes = parsed.nodes.map((n: any) => ({
+            loadedNodes = parsed.nodes.map((n: CustomNode) => ({
               id: n.id,
-              type: n.type as 'question' | 'delay' | 'terminal',
+              type: (n.type || 'question') as 'question' | 'delay' | 'terminal',
               label: n.data?.label || n.data?.terminalMessage || n.data?.delayDuration || '',
               questionType: n.data?.questionType,
               options: n.data?.options || [],
@@ -48,15 +49,15 @@ export const useRunnerState = (id: string | undefined, defaultNodes: NodeData[],
             }));
           }
           if (parsed.edges) {
-            loadedEdges = parsed.edges.map((e: any) => ({
+            loadedEdges = parsed.edges.map((e: ExtendedEdge) => ({
               id: e.id,
               source: e.source,
               target: e.target,
               rules: e.rules || e.data?.rules || []
             }));
           }
-        } catch (e) {
-          console.error("Failed to parse graph", e);
+        } catch {
+          // Fallback to default if parsing failed
         }
       }
     }
@@ -167,6 +168,46 @@ export const useRunnerState = (id: string | undefined, defaultNodes: NodeData[],
       setErrorMsg('An email address is required to schedule your follow-up survey.');
       return;
     }
+
+    if (id) {
+      const savedSurveys = localStorage.getItem('resonator_surveys');
+      if (savedSurveys) {
+        try {
+          const list = JSON.parse(savedSurveys) as SurveyItem[];
+          const updatedList = list.map((s: SurveyItem) => {
+            if (s.id === id) {
+              const currentTotal = parseInt(s.kpis?.[0]?.value?.replace(/,/g, '') || '0', 10) + 1;
+              const currentFollowUps = parseInt(s.kpis?.[3]?.value?.replace(/,/g, '') || '0', 10) + (traversedDelayNodes ? 1 : 0);
+              const updatedKpis = [
+                { ...s.kpis[0], value: currentTotal.toLocaleString() },
+                s.kpis[1],
+                s.kpis[2],
+                { ...s.kpis[3], value: currentFollowUps.toLocaleString() }
+              ];
+              const newLogs = emailInput ? [{
+                email: emailInput,
+                original: s.title,
+                followUp: 'Scheduled Follow-up',
+                status: 'Awaiting dispatch'
+              }, ...(s.logs || [])] : s.logs;
+
+              return {
+                ...s,
+                kpis: updatedKpis,
+                logs: newLogs,
+                lastModified: 'Just now'
+              };
+            }
+            return s;
+          });
+          localStorage.setItem('resonator_surveys', JSON.stringify(updatedList));
+          window.dispatchEvent(new Event('active_survey_changed'));
+        } catch {
+          // Ignore storage update errors
+        }
+      }
+    }
+
     setIsSubmitted(true);
   };
 

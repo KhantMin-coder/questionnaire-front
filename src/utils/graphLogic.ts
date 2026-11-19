@@ -138,19 +138,24 @@ export function evaluateOperator(
   const strAnswer = String(answer).trim().toLowerCase();
   const strValue = String(value).trim().toLowerCase();
 
+  const numAnswer = Number(answer);
+  const numValue = Number(value);
+  const isAnswerNumeric = strAnswer !== '' && !isNaN(numAnswer);
+  const isValueNumeric = strValue !== '' && !isNaN(numValue);
+
   switch (operator) {
     case '==':
       return strAnswer === strValue;
     case '!=':
       return strAnswer !== strValue;
     case '<':
-      return Number(answer) < Number(value);
+      return isAnswerNumeric && isValueNumeric ? numAnswer < numValue : false;
     case '>':
-      return Number(answer) > Number(value);
+      return isAnswerNumeric && isValueNumeric ? numAnswer > numValue : false;
     case '<=':
-      return Number(answer) <= Number(value);
+      return isAnswerNumeric && isValueNumeric ? numAnswer <= numValue : false;
     case '>=':
-      return Number(answer) >= Number(value);
+      return isAnswerNumeric && isValueNumeric ? numAnswer >= numValue : false;
     case 'contains':
       if (Array.isArray(answer)) {
         return answer.map(a => String(a).toLowerCase()).includes(strValue);

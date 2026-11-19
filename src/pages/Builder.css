@@ -22,6 +22,14 @@
   position: relative;
 }
 
+.terminal-node--disqualify {
+  border-left: 4px solid var(--color-danger);
+}
+
+.terminal-node--complete {
+  border-left: 4px solid var(--color-success);
+}
+
 .node-header {
   display: flex;
   align-items: center;
@@ -84,6 +92,14 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
+}
+
+.terminal-dot--disqualify {
+  background-color: var(--color-danger);
+}
+
+.terminal-dot--complete {
+  background-color: var(--color-success);
 }
 
 .handle--muted {
